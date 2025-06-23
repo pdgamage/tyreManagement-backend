@@ -1,11 +1,17 @@
 require("dotenv").config();
 const app = require("./app");
-const sequelize = require("./config/db");
+const { sequelize } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
 const requestRoutes = require("./routes/requestRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
 
 const port = process.env.PORT || 5000;
+
+// Import models so they are registered
+require("./models/User");
+require("./models/Vehicle");
+require("./models/Request");
+require("./models/RequestImage");
 
 // Test database connection
 async function testDbConnection() {
@@ -29,8 +35,9 @@ app.listen(port, async () => {
   await testDbConnection();
 });
 
+// Sync models
 sequelize
-  .sync({ alter: true }) // Use { force: true } only for development
+  .sync({ alter: true })
   .then(() => {
     console.log("Database & tables synced!");
   })

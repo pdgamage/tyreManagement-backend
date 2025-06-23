@@ -2,7 +2,6 @@ require("dotenv").config();
 const mysql = require("mysql2/promise");
 const { Sequelize } = require("sequelize");
 
-// MySQL pool for legacy code
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -13,7 +12,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// Sequelize instance for models
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
