@@ -9,7 +9,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "https://your-frontend.vercel.app", // replace with your actual Vercel URL
+    origin: "https://slt-tyre-management-new.vercel.app/", 
     credentials: true,
   })
 );
