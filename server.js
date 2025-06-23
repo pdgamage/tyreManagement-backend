@@ -2,6 +2,8 @@ require("dotenv").config();
 const app = require("./app");
 const sequelize = require("./config/db");
 require("./models"); // Loads all models and associations
+const requestRoutes = require("./routes/requestRoutes");
+const vehicleRoutes = require("./routes/vehicleRoutes");
 
 const port = process.env.PORT || 5000;
 
@@ -19,6 +21,7 @@ async function testDbConnection() {
 
 // Middleware for routes
 app.use("/api", requestRoutes);
+app.use("/api", vehicleRoutes);
 
 // Start server
 app.listen(port, async () => {
