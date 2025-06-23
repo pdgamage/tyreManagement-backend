@@ -1,8 +1,6 @@
+const { sequelize, pool } = require("../config/db");
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
-const pool = require("../config/db");
 
-// Sequelize model for auto table creation (matches your SQL)
 const RequestModel = sequelize.define(
   "Request",
   {
@@ -29,7 +27,19 @@ const RequestModel = sequelize.define(
     previousKmReading: { type: DataTypes.INTEGER, allowNull: false },
     tireWearPattern: { type: DataTypes.STRING(100), allowNull: false },
     comments: { type: DataTypes.TEXT },
-    status: { type: DataTypes.STRING(50), defaultValue: "pending" },
+    status: {
+      type: DataTypes.ENUM(
+        "pending",
+        "supervisor approved",
+        "technical-manager approved",
+        " engineer approved",
+        "customer-officer approved",
+        "approved",
+        "rejected",
+        "complete"
+      ),
+      defaultValue: "pending",
+    },
     submittedAt: { type: DataTypes.DATE, allowNull: false },
   },
   {
@@ -188,5 +198,5 @@ exports.getRequestsByUser = async (req, res) => {
   }
 };
 
-module.exports = Request;
-module.exports.RequestModel = RequestModel; // Export Sequelize model for associations/sync
+module.exports = RequestModel;
+module.exports.RequestModel = RequestModel;

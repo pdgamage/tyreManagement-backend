@@ -1,15 +1,16 @@
+const { sequelize, pool } = require("../config/db");
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
 
 // Define the Sequelize model for auto table creation
 const VehicleModel = sequelize.define(
   "Vehicle",
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    registeredBy: { type: DataTypes.INTEGER, allowNull: false },
     vehicleNumber: {
       type: DataTypes.STRING(50),
-      unique: true,
       allowNull: false,
+      unique: true,
     },
     make: { type: DataTypes.STRING(50) },
     model: { type: DataTypes.STRING(50) },
@@ -17,7 +18,6 @@ const VehicleModel = sequelize.define(
     tireSize: { type: DataTypes.STRING(50) },
     department: { type: DataTypes.STRING(100) },
     status: { type: DataTypes.STRING(20) },
-    registeredBy: { type: DataTypes.INTEGER, allowNull: false },
   },
   {
     tableName: "vehicles",
@@ -60,5 +60,5 @@ class Vehicle {
   }
 }
 
-module.exports = Vehicle;
+module.exports = VehicleModel;
 module.exports.VehicleModel = VehicleModel; // Export the Sequelize model for associations/sync

@@ -1,15 +1,23 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const { sequelize, pool } = require("../config/db");
+const { DataTypes } = require("sequelize");
 
-const User = sequelize.define('User', {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  azure_id: { type: DataTypes.STRING(100), unique: true, allowNull: false },
-  email: { type: DataTypes.STRING(255), unique: true, allowNull: false },
-  name: { type: DataTypes.STRING(255) },
-  role: { type: DataTypes.STRING(50) }
-}, {
-  tableName: 'users',
-  timestamps: false
-});
+// Sequelize model for auto table creation
+const UserModel = sequelize.define(
+  "User",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    azure_id: { type: DataTypes.STRING(100), allowNull: false, unique: true },
+    email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
+    name: { type: DataTypes.STRING(255) },
+    role: { type: DataTypes.STRING(50) },
+  },
+  {
+    tableName: "users",
+    timestamps: false,
+  }
+);
 
-module.exports = User;
+// ...your existing class logic here (if any)...
+
+module.exports = UserModel;
+module.exports.UserModel = UserModel;

@@ -1,7 +1,7 @@
+const { sequelize, pool } = require("../config/db");
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
 
-const RequestImage = sequelize.define(
+const RequestImageModel = sequelize.define(
   "RequestImage",
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -15,4 +15,7 @@ const RequestImage = sequelize.define(
   }
 );
 
-module.exports = RequestImage;
+// ...your existing class logic here (if any)...
+
+module.exports = RequestImageModel;
+module.exports.RequestImageModel = RequestImageModel;
