@@ -1,4 +1,42 @@
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 const pool = require("../config/db");
+
+// Sequelize model for auto table creation (matches your SQL)
+const RequestModel = sequelize.define(
+  "Request",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false },
+    vehicleId: { type: DataTypes.INTEGER, allowNull: false },
+    vehicleNumber: { type: DataTypes.STRING(50), allowNull: false },
+    quantity: { type: DataTypes.INTEGER, allowNull: false },
+    tubesQuantity: { type: DataTypes.INTEGER, allowNull: false },
+    tireSize: { type: DataTypes.STRING(50), allowNull: false },
+    requestReason: { type: DataTypes.TEXT, allowNull: false },
+    requesterName: { type: DataTypes.STRING(100), allowNull: false },
+    requesterEmail: { type: DataTypes.STRING(100), allowNull: false },
+    requesterPhone: { type: DataTypes.STRING(20), allowNull: false },
+    year: { type: DataTypes.STRING(4), allowNull: false },
+    vehicleBrand: { type: DataTypes.STRING(50), allowNull: false },
+    vehicleModel: { type: DataTypes.STRING(50), allowNull: false },
+    userSection: { type: DataTypes.STRING(100), allowNull: false },
+    lastReplacementDate: { type: DataTypes.DATEONLY, allowNull: false },
+    existingTireMake: { type: DataTypes.STRING(100), allowNull: false },
+    tireSizeRequired: { type: DataTypes.STRING(50), allowNull: false },
+    costCenter: { type: DataTypes.STRING(50), allowNull: false },
+    presentKmReading: { type: DataTypes.INTEGER, allowNull: false },
+    previousKmReading: { type: DataTypes.INTEGER, allowNull: false },
+    tireWearPattern: { type: DataTypes.STRING(100), allowNull: false },
+    comments: { type: DataTypes.TEXT },
+    status: { type: DataTypes.STRING(50), defaultValue: "pending" },
+    submittedAt: { type: DataTypes.DATE, allowNull: false },
+  },
+  {
+    tableName: "requests",
+    timestamps: false,
+  }
+);
 
 class Request {
   static async create(data) {
@@ -11,7 +49,7 @@ class Request {
         presentKmReading, previousKmReading, tireWearPattern, comments, status, submittedAt
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        data.userId, // <-- Add this
+        data.userId,
         data.vehicleId,
         data.vehicleNumber,
         data.quantity,
@@ -151,3 +189,4 @@ exports.getRequestsByUser = async (req, res) => {
 };
 
 module.exports = Request;
+module.exports.RequestModel = RequestModel; // Export Sequelize model for associations/sync
