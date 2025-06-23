@@ -1,6 +1,6 @@
 require("dotenv").config();
 const app = require("./app");
-const { sequelize } = require("./config/db"); // Correct import
+const { sequelize, pool } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
 const requestRoutes = require("./routes/requestRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
@@ -16,11 +16,12 @@ require("./models/RequestImage");
 // Test database connection
 async function testDbConnection() {
   try {
-    const connection = await sequelize.getConnection();
-    console.log("Successfully connected to the database");
+    const connection = await pool.getConnection();
+    await connection.ping();
     connection.release();
+    console.log("MySQL pool connection has been established successfully.");
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Unable to connect to the MySQL pool:", error);
     process.exit(1);
   }
 }
