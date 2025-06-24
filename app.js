@@ -9,7 +9,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "https://slt-tyre-management-new.vercel.app/", 
+    origin: "https://slt-tyre-management-new.vercel.app", 
     credentials: true,
   })
 );
