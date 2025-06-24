@@ -33,9 +33,9 @@ router.get("/:id", requestController.getRequestById);
 router.put("/:id/status", requestController.updateRequestStatus);
 
 // Get requests by user
-router.get("/user/:userId", requestController.getRequestsByUser);
+router.get("/user/:id", requestController.getRequestsByUser);
 
 // Place order for an approved request
-router.post('/:id/place-order', requestController.placeOrder);
+router.post("/:id/place-order", requestController.placeOrder);
 
 module.exports = router;
