@@ -121,10 +121,7 @@ class Request {
   }
 
   static async findByUserId(userId) {
-    const [rows] = await pool.query("SELECT * FROM requests WHERE userId = ?", [
-      userId,
-    ]);
-    return rows;
+    return await Request.findAll({ where: { userId } });
   }
 
   static async updateApprovalStatus(id, role, { approved, notes }) {
