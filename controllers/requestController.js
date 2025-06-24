@@ -99,13 +99,23 @@ exports.updateRequestStatus = async (req, res) => {
       "customer-officer approved",
       "approved",
       "rejected",
+      "complete",
     ];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    await Request.updateStatus(req.params.id, status);
-    res.json({ message: "Request status updated successfully" });
+    // Find the request by primary key
+    const request = await Request.findByPk(req.params.id);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Update the status and save
+    request.status = status;
+    await request.save();
+
+    res.json({ message: "Request status updated successfully", request });
   } catch (error) {
     console.error("Error updating request status:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -116,7 +126,7 @@ exports.getRequestsByUser = async (req, res) => {
   try {
     const userId = req.params.id;
     const requests = await Request.findAll({
-      where: { userId }, 
+      where: { userId },
       order: [["submittedAt", "DESC"]],
     });
     res.json(requests);
