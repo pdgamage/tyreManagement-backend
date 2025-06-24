@@ -1,6 +1,6 @@
 const passport = require("passport");
 const BearerStrategy = require("passport-azure-ad").BearerStrategy;
-const pool = require("../config/db");
+const { pool } = require("../config/db");
 
 const options = {
   identityMetadata: `https://login.microsoftonline.com/a92cbcff-6e56-42ae-9e7f-742431739e80/v2.0/.well-known/openid-configuration`,
