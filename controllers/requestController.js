@@ -20,11 +20,27 @@ exports.createRequest = async (req, res) => {
 
     // Validate required fields
     const requiredFields = [
-      "userId", "vehicleId", "vehicleNumber", "quantity", "tubesQuantity", "tireSize",
-      "requestReason", "requesterName", "requesterEmail", "requesterPhone", "year",
-      "vehicleBrand", "vehicleModel", "userSection", "lastReplacementDate",
-      "existingTireMake", "tireSizeRequired", "costCenter", "presentKmReading",
-      "previousKmReading", "tireWearPattern"
+      "userId",
+      "vehicleId",
+      "vehicleNumber",
+      "quantity",
+      "tubesQuantity",
+      "tireSize",
+      "requestReason",
+      "requesterName",
+      "requesterEmail",
+      "requesterPhone",
+      "year",
+      "vehicleBrand",
+      "vehicleModel",
+      "userSection",
+      "lastReplacementDate",
+      "existingTireMake",
+      "tireSizeRequired",
+      "costCenter",
+      "presentKmReading",
+      "previousKmReading",
+      "tireWearPattern",
     ];
     for (const field of requiredFields) {
       if (
@@ -32,7 +48,9 @@ exports.createRequest = async (req, res) => {
         requestData[field] === null ||
         requestData[field] === ""
       ) {
-        return res.status(400).json({ error: `Missing required field: ${field}` });
+        return res
+          .status(400)
+          .json({ error: `Missing required field: ${field}` });
       }
     }
 
@@ -96,9 +114,14 @@ exports.updateRequestStatus = async (req, res) => {
 
 exports.getRequestsByUser = async (req, res) => {
   try {
-    const requests = await Request.findByUserId(req.params.userId);
+    const userId = req.params.id;
+    const requests = await Request.findAll({
+      where: { userId }, 
+      order: [["submittedAt", "DESC"]],
+    });
     res.json(requests);
   } catch (error) {
+    console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -107,16 +130,19 @@ exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Request.placeOrder(id);
-    
+
     if (result.affectedRows === 0) {
-      return res.status(400).json({ 
-        message: "Cannot place order. Request either doesn't exist or doesn't have all required approvals." 
+      return res.status(400).json({
+        message:
+          "Cannot place order. Request either doesn't exist or doesn't have all required approvals.",
       });
     }
-    
+
     res.json({ message: "Order placed successfully" });
   } catch (err) {
-    console.error('Error placing order:', err);
-    res.status(500).json({ message: "Error placing order", error: err.message });
+    console.error("Error placing order:", err);
+    res
+      .status(500)
+      .json({ message: "Error placing order", error: err.message });
   }
 };
