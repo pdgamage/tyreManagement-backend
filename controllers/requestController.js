@@ -1,6 +1,6 @@
 const Request = require("../models/Request");
 const Vehicle = require("../models/Vehicle");
-const RequestImage = require("../models/RequestImage"); // <-- Add this line
+const RequestImage = require("../models/RequestImage");
 
 exports.createRequest = async (req, res) => {
   try {
