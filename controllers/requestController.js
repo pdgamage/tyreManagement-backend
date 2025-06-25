@@ -1,14 +1,10 @@
 const Request = require("../models/Request");
 const Vehicle = require("../models/Vehicle");
+const RequestImage = require("../models/RequestImage"); // <-- Add this line
 
 exports.createRequest = async (req, res) => {
   try {
     const requestData = req.body;
-    // req.files is an array of files
-    const files = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
-    requestData.images = files;
 
     // Convert numeric fields from string to number
     requestData.vehicleId = Number(requestData.vehicleId);
@@ -54,7 +50,23 @@ exports.createRequest = async (req, res) => {
       }
     }
 
+    // 1. Create the request
     const result = await Request.create(requestData);
+
+    // 2. Save image URLs in request_images table
+    if (Array.isArray(requestData.images)) {
+      for (let i = 0; i < requestData.images.length; i++) {
+        const imageUrl = requestData.images[i];
+        if (imageUrl) {
+          await RequestImage.create({
+            requestId: result.id,
+            imagePath: imageUrl,
+            imageIndex: i,
+          });
+        }
+      }
+    }
+
     res.status(201).json({ requestId: result.id });
   } catch (err) {
     console.error("Error creating tire request:", err);
