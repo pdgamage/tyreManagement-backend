@@ -1,5 +1,4 @@
 const Request = require("../models/Request");
-const Vehicle = require("../models/Vehicle");
 const RequestImage = require("../models/RequestImage");
 
 exports.createRequest = async (req, res) => {
@@ -85,12 +84,23 @@ exports.getAllRequests = async (req, res) => {
 
 exports.getRequestById = async (req, res) => {
   try {
-    // Use findByPk for Sequelize model
+    // Fetch the request
     const request = await Request.findByPk(req.params.id);
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
-    res.json(request);
+
+    // Fetch related images
+    const images = await RequestImage.findAll({
+      where: { requestId: req.params.id },
+      order: [["imageIndex", "ASC"]],
+    });
+
+    // Map image paths to an array of URLs
+    const imageUrls = images.map((img) => img.imagePath);
+
+    // Add images to the response
+    res.json({ ...request.toJSON(), images: imageUrls });
   } catch (error) {
     console.error("Error in getRequestById:", error);
     res.status(500).json({ error: "Internal server error" });
