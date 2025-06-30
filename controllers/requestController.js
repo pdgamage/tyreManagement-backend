@@ -85,13 +85,14 @@ exports.getAllRequests = async (req, res) => {
 
 exports.getRequestById = async (req, res) => {
   try {
-    const request = await Request.findById(req.params.id);
+    // Use findByPk for Sequelize model
+    const request = await Request.findByPk(req.params.id);
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
     res.json(request);
   } catch (error) {
-    console.error("Error in getRequestById:", error); // Add this line
+    console.error("Error in getRequestById:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
