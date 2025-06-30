@@ -107,10 +107,17 @@ class Request {
   }
 
   static async findById(id) {
-    const [rows] = await pool.query("SELECT * FROM requests WHERE id = ?", [
-      id,
-    ]);
-    return rows[0];
+    try {
+      console.log("Looking for request with id:", id);
+      const [rows] = await pool.query("SELECT * FROM requests WHERE id = ?", [
+        id,
+      ]);
+      console.log("Query result:", rows);
+      return rows[0];
+    } catch (err) {
+      console.error("Error in findById:", err);
+      throw err;
+    }
   }
 
   static async updateStatus(id, status) {
