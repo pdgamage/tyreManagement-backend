@@ -91,6 +91,7 @@ exports.getRequestById = async (req, res) => {
     }
     res.json(request);
   } catch (error) {
+    console.error("Error in getRequestById:", error); // Add this line
     res.status(500).json({ error: "Internal server error" });
   }
 };
