@@ -107,7 +107,8 @@ class Request {
   }
 
   static async findById(id) {
-    return await RequestModel.findByPk(id);
+    const [rows] = await pool.query("SELECT * FROM requests WHERE id = ?", [id]);
+    return rows[0];
   }
 
   static async updateStatus(id, status) {
