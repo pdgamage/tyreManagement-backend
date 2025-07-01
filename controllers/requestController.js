@@ -177,16 +177,3 @@ exports.placeOrder = async (req, res) => {
       .json({ message: "Error placing order", error: err.message });
   }
 };
-
-exports.getRequestsByVehicle = async (req, res) => {
-  try {
-    const vehicleId = req.params.vehicleId;
-    const [requests] = await require("../config/db").pool.query(
-      "SELECT * FROM requests WHERE vehicleId = ? ORDER BY lastReplacementDate DESC LIMIT 1",
-      [vehicleId]
-    );
-    res.json(requests);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch requests" });
-  }
-};
