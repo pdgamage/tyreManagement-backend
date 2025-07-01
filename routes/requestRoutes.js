@@ -38,4 +38,7 @@ router.get("/user/:id", requestController.getRequestsByUser);
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
+// Get requests by vehicle
+router.get("/vehicle/:vehicleId", requestController.getRequestsByVehicle);
+
 module.exports = router;
