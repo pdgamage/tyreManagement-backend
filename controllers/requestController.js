@@ -75,7 +75,7 @@ exports.createRequest = async (req, res) => {
 exports.getAllRequests = async (req, res) => {
   try {
     const requests = await RequestModel.findAll();
-    res.json(requests);
+    res.json(Array.isArray(requests) ? requests : []);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -149,7 +149,7 @@ exports.getRequestsByUser = async (req, res) => {
       where: { userId },
       order: [["submittedAt", "DESC"]],
     });
-    res.json(requests);
+    res.json(Array.isArray(requests) ? requests : []);
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
