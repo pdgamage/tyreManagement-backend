@@ -77,67 +77,25 @@ exports.getAllRequests = async (req, res) => {
     const requests = await RequestModel.findAll();
     res.json(Array.isArray(requests) ? requests : []);
   } catch (error) {
+    console.error("Error in getAllRequests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 exports.getRequestById = async (req, res) => {
   try {
-    // Fetch the request
     const request = await RequestModel.findByPk(req.params.id);
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
-
-    // Fetch related images
     const images = await RequestImageModel.findAll({
       where: { requestId: req.params.id },
       order: [["imageIndex", "ASC"]],
     });
-
-    // Map image paths to an array of URLs
     const imageUrls = images.map((img) => img.imagePath);
-
-    // Add images to the response
     res.json({ ...request.toJSON(), images: imageUrls });
   } catch (error) {
     console.error("Error in getRequestById:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-exports.updateRequestStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    // Allow all valid statuses from your enum
-    const allowedStatuses = [
-      "pending",
-      "supervisor approved",
-      "technical-manager approved",
-      "engineer approved",
-      "customer-officer approved",
-      "approved",
-      "rejected",
-      "complete",
-    ];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    // Find the request by primary key
-    const request = await RequestModel.findByPk(req.params.id);
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
-
-    // Update the status and save
-    request.status = status;
-    await request.save();
-
-    res.json({ message: "Request status updated successfully", request });
-  } catch (error) {
-    console.error("Error updating request status:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -156,33 +114,10 @@ exports.getRequestsByUser = async (req, res) => {
   }
 };
 
-exports.placeOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await RequestModel.placeOrder(id);
-
-    if (result.affectedRows === 0) {
-      return res.status(400).json({
-        message:
-          "Cannot place order. Request either doesn't exist or doesn't have all required approvals.",
-      });
-    }
-
-    res.json({ message: "Order placed successfully" });
-  } catch (err) {
-    console.error("Error placing order:", err);
-    res
-      .status(500)
-      .json({ message: "Error placing order", error: err.message });
-  }
-};
-
 exports.deleteRequest = async (req, res) => {
   try {
     const id = req.params.id;
-    // Delete related images first (if needed)
     await RequestImageModel.destroy({ where: { requestId: id } });
-    // Delete the request
     const deleted = await RequestModel.destroy({ where: { id } });
     if (!deleted) {
       return res.status(404).json({ error: "Request not found" });
