@@ -1,5 +1,6 @@
 const Request = require("../models/Request");
 const RequestImage = require("../models/RequestImage");
+const { Request: RequestModel } = require("../models");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -175,5 +176,19 @@ exports.placeOrder = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error placing order", error: err.message });
+  }
+};
+
+exports.deleteRequest = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await RequestModel.destroy({ where: { id } });
+    if (result === 0) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+    res.json({ message: "Request deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting request:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
