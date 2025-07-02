@@ -38,4 +38,7 @@ router.get("/user/:id", requestController.getRequestsByUser);
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
+// Delete a request
+router.delete("/:id", requestController.deleteRequest);
+
 module.exports = router;
