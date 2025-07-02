@@ -1,4 +1,5 @@
-const { RequestModel, RequestImageModel } = require("../models");
+const Request = require("../models/Request");
+const RequestImage = require("../models/RequestImage");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -49,14 +50,14 @@ exports.createRequest = async (req, res) => {
     }
 
     // 1. Create the request
-    const result = await RequestModel.create(requestData);
+    const result = await Request.create(requestData);
 
     // 2. Save image URLs in request_images table
     if (Array.isArray(requestData.images)) {
       for (let i = 0; i < requestData.images.length; i++) {
         const imageUrl = requestData.images[i];
         if (imageUrl) {
-          await RequestImageModel.create({
+          await RequestImage.create({
             requestId: result.id,
             imagePath: imageUrl,
             imageIndex: i,
@@ -74,25 +75,31 @@ exports.createRequest = async (req, res) => {
 
 exports.getAllRequests = async (req, res) => {
   try {
-    const requests = await RequestModel.findAll();
-    res.json(Array.isArray(requests) ? requests : []);
+    const requests = await Request.findAll();
+    res.json(requests);
   } catch (error) {
-    console.error("Error in getAllRequests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 exports.getRequestById = async (req, res) => {
   try {
-    const request = await RequestModel.findByPk(req.params.id);
+    // Fetch the request
+    const request = await Request.findByPk(req.params.id);
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
-    const images = await RequestImageModel.findAll({
+
+    // Fetch related images
+    const images = await RequestImage.findAll({
       where: { requestId: req.params.id },
       order: [["imageIndex", "ASC"]],
     });
+
+    // Map image paths to an array of URLs
     const imageUrls = images.map((img) => img.imagePath);
+
+    // Add images to the response
     res.json({ ...request.toJSON(), images: imageUrls });
   } catch (error) {
     console.error("Error in getRequestById:", error);
@@ -100,30 +107,73 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
+exports.updateRequestStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    // Allow all valid statuses from your enum
+    const allowedStatuses = [
+      "pending",
+      "supervisor approved",
+      "technical-manager approved",
+      "engineer approved",
+      "customer-officer approved",
+      "approved",
+      "rejected",
+      "complete",
+    ];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    // Find the request by primary key
+    const request = await Request.findByPk(req.params.id);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Update the status and save
+    request.status = status;
+    await request.save();
+
+    res.json({ message: "Request status updated successfully", request });
+  } catch (error) {
+    console.error("Error updating request status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.getRequestsByUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    const requests = await RequestModel.findAll({
+    const requests = await Request.findAll({
       where: { userId },
       order: [["submittedAt", "DESC"]],
     });
-    res.json(Array.isArray(requests) ? requests : []);
+    res.json(requests);
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-exports.deleteRequest = async (req, res) => {
+exports.placeOrder = async (req, res) => {
   try {
-    const id = req.params.id;
-    await RequestImageModel.destroy({ where: { requestId: id } });
-    const deleted = await RequestModel.destroy({ where: { id } });
-    if (!deleted) {
-      return res.status(404).json({ error: "Request not found" });
+    const { id } = req.params;
+    const result = await Request.placeOrder(id);
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({
+        message:
+          "Cannot place order. Request either doesn't exist or doesn't have all required approvals.",
+      });
     }
-    res.json({ message: "Request deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete request" });
+
+    res.json({ message: "Order placed successfully" });
+  } catch (err) {
+    console.error("Error placing order:", err);
+    res
+      .status(500)
+      .json({ message: "Error placing order", error: err.message });
   }
 };
