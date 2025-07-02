@@ -110,7 +110,7 @@ exports.getRequestById = async (req, res) => {
 
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -133,8 +133,11 @@ exports.updateRequestStatus = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    // Update the status and save
+    // Update the status and supervisor_notes
     request.status = status;
+    if (notes !== undefined) {
+      request.supervisor_notes = notes;
+    }
     await request.save();
 
     res.json({ message: "Request status updated successfully", request });

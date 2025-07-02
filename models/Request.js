@@ -41,6 +41,7 @@ const RequestModel = sequelize.define(
       defaultValue: "pending",
     },
     submittedAt: { type: DataTypes.DATE, allowNull: false },
+    supervisor_notes: { type: DataTypes.TEXT },
   },
   {
     tableName: "requests",
