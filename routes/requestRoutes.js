@@ -41,7 +41,4 @@ router.post("/:id/place-order", requestController.placeOrder);
 // Delete a request
 router.delete("/requests/:id", requestController.deleteRequest);
 
-// Server-Sent Events for requests
-router.get("/events/requests", requestController.sseRequests);
-
 module.exports = router;
