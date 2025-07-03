@@ -67,8 +67,7 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    const fullRequest = await Request.findById(result.id);
-    res.status(201).json(fullRequest);
+    res.status(201).json({ requestId: result.id });
   } catch (err) {
     console.error("Error creating tire request:", err);
     res.status(500).json({ error: "Failed to create tire request" });
