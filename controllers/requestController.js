@@ -134,8 +134,18 @@ exports.updateRequestStatus = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
     request.status = status;
+
     // Save notes to the correct column
-    if (status === "technical-manager approved" || status === "rejected") {
+    if (
+      status === "supervisor approved" ||
+      (status === "rejected" && req.body.role === "supervisor")
+    ) {
+      request.supervisor_notes = notes;
+    }
+    if (
+      status === "technical-manager approved" ||
+      (status === "rejected" && req.body.role === "technical-manager")
+    ) {
       request.technical_manager_note = notes;
     }
     await request.save();
