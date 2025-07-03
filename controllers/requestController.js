@@ -2,9 +2,6 @@ const Request = require("../models/Request");
 const RequestImage = require("../models/RequestImage");
 const { Request: RequestModel } = require("../models");
 
-const sseClients = [];
-exports.sseClients = sseClients;
-
 exports.createRequest = async (req, res) => {
   try {
     const requestData = req.body;
@@ -70,15 +67,7 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    // After creating the request and images
-    const fullRequest = await Request.findById(result.id);
-
-    // Emit SSE event to all clients
-    const { sseClients } = require("./requestController");
-    const eventData = `data: ${JSON.stringify(fullRequest)}\n\n`;
-    sseClients.forEach((client) => client.write(eventData));
-
-    res.status(201).json(fullRequest);
+    res.status(201).json({ requestId: result.id });
   } catch (err) {
     console.error("Error creating tire request:", err);
     res.status(500).json({ error: "Failed to create tire request" });
@@ -202,21 +191,4 @@ exports.deleteRequest = async (req, res) => {
     console.error("Error deleting request:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-};
-
-// Add this export
-exports.sseRequests = (req, res) => {
-  res.set({
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
-  res.flushHeaders();
-
-  sseClients.push(res);
-
-  req.on("close", () => {
-    const idx = sseClients.indexOf(res);
-    if (idx !== -1) sseClients.splice(idx, 1);
-  });
 };
