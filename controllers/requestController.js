@@ -51,7 +51,7 @@ exports.createRequest = async (req, res) => {
     }
 
     // 1. Create the request
-    const result = await Request.create(requestData);
+    const createdRequest = await Request.create(requestData);
 
     // 2. Save image URLs in request_images table
     if (Array.isArray(requestData.images)) {
@@ -59,7 +59,7 @@ exports.createRequest = async (req, res) => {
         const imageUrl = requestData.images[i];
         if (imageUrl) {
           await RequestImage.create({
-            requestId: result.id,
+            requestId: createdRequest.id,
             imagePath: imageUrl,
             imageIndex: i,
           });
@@ -67,7 +67,9 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    res.status(201).json({ requestId: result.id });
+    // Fetch the full request object (with all fields)
+    const fullRequest = await Request.findById(createdRequest.id);
+    res.status(201).json(fullRequest);
   } catch (err) {
     console.error("Error creating tire request:", err);
     res.status(500).json({ error: "Failed to create tire request" });
