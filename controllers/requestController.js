@@ -68,7 +68,7 @@ exports.createRequest = async (req, res) => {
     }
 
     // Fetch the full request object (with all fields)
-    const fullRequest = await Request.findById(createdRequest.id);
+    const fullRequest = await Request.findByPk(createdRequest.id);
     res.status(201).json(fullRequest);
   } catch (err) {
     console.error("Error creating tire request:", err);
