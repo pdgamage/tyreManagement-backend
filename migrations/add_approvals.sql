@@ -11,3 +11,5 @@ ADD COLUMN engineer_timestamp DATETIME,
 ADD COLUMN order_placed BOOLEAN DEFAULT FALSE,
 ADD COLUMN order_timestamp DATETIME;
 ADD COLUMN supervisor_notes TEXT;
+ADD COLUMN technical_manager_note TEXT,
+ADD COLUMN engineer_note TEXT;

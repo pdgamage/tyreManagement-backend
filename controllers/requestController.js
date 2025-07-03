@@ -132,17 +132,14 @@ exports.updateRequestStatus = async (req, res) => {
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
-
-    // Update the status and supervisor_notes
     request.status = status;
-    if (notes !== undefined) {
-      request.supervisor_notes = notes;
+    // Save notes to the correct column
+    if (status === "technical-manager approved" || status === "rejected") {
+      request.technical_manager_note = notes;
     }
     await request.save();
-
     res.json({ message: "Request status updated successfully", request });
   } catch (error) {
-    console.error("Error updating request status:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
