@@ -51,10 +51,10 @@ exports.createRequest = async (req, res) => {
     }
 
     // 1. Create the request
-    const { supervisorId, ...otherFields } = requestData;
-    const result = await Request.create({
+    const { supervisorId, ...otherFields } = req.body;
+    const request = await Request.create({
       ...otherFields,
-      supervisorId,
+      supervisorId, // make sure this is included
     });
 
     // 2. Save image URLs in request_images table
@@ -63,7 +63,7 @@ exports.createRequest = async (req, res) => {
         const imageUrl = requestData.images[i];
         if (imageUrl) {
           await RequestImage.create({
-            requestId: result.id,
+            requestId: request.id,
             imagePath: imageUrl,
             imageIndex: i,
           });
@@ -71,7 +71,7 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    const fullRequest = await Request.findByPk(result.id);
+    const fullRequest = await Request.findByPk(request.id);
     res.status(201).json(fullRequest);
   } catch (err) {
     console.error("Error creating tire request:", err);

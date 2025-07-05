@@ -46,7 +46,7 @@ const RequestModel = sequelize.define(
     engineer_note: { type: DataTypes.TEXT },
     supervisorId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: false, // or true if optional
       references: {
         model: "Users",
         key: "id",

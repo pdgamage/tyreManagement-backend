@@ -13,4 +13,5 @@ ADD COLUMN order_timestamp DATETIME,
 ADD COLUMN supervisor_notes TEXT,
 ADD COLUMN technical_manager_note TEXT,
 ADD COLUMN engineer_note TEXT,
-ADD COLUMN supervisorId INTEGER REFERENCES Users(id);
+ADD COLUMN supervisorId INTEGER REFERENCES Users(id),
+ADD COLUMN "supervisorId" INTEGER REFERENCES "Users"("id");
