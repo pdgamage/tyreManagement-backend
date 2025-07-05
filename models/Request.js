@@ -67,8 +67,8 @@ class Request {
         userId, vehicleId, vehicleNumber, quantity, tubesQuantity, tireSize, requestReason,
         requesterName, requesterEmail, requesterPhone, year, vehicleBrand, vehicleModel,
         userSection, lastReplacementDate, existingTireMake, tireSizeRequired, costCenter,
-        presentKmReading, previousKmReading, tireWearPattern, comments, status, submittedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        presentKmReading, previousKmReading, tireWearPattern, comments, status, submittedAt, supervisorId
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.userId,
         data.vehicleId,
@@ -94,6 +94,7 @@ class Request {
         data.comments,
         data.status || "pending",
         data.submittedAt || new Date(),
+        data.supervisorId, // <-- make sure this is included!
       ]
     );
     const requestId = result.insertId;
