@@ -51,11 +51,7 @@ exports.createRequest = async (req, res) => {
     }
 
     // 1. Create the request
-    const { supervisorId, ...otherFields } = req.body;
-    const request = await Request.create({
-      ...otherFields,
-      supervisorId, // make sure this is included
-    });
+    const result = await Request.create(requestData);
 
     // 2. Save image URLs in request_images table
     if (Array.isArray(requestData.images)) {
@@ -63,7 +59,7 @@ exports.createRequest = async (req, res) => {
         const imageUrl = requestData.images[i];
         if (imageUrl) {
           await RequestImage.create({
-            requestId: request.id,
+            requestId: result.id,
             imagePath: imageUrl,
             imageIndex: i,
           });
@@ -71,7 +67,7 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    const fullRequest = await Request.findByPk(request.id);
+    const fullRequest = await Request.findByPk(result.id);
     res.status(201).json(fullRequest);
   } catch (err) {
     console.error("Error creating tire request:", err);
@@ -170,18 +166,6 @@ exports.getRequestsByUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-exports.getRequestsBySupervisor = async (req, res) => {
-  const { supervisorId } = req.params;
-  try {
-    const requests = await require("../models").Request.findAll({
-      where: { supervisorId },
-    });
-    res.json(requests);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch supervisor requests" });
   }
 };
 
