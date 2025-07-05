@@ -44,6 +44,14 @@ const RequestModel = sequelize.define(
     supervisor_notes: { type: DataTypes.TEXT },
     technical_manager_note: { type: DataTypes.TEXT },
     engineer_note: { type: DataTypes.TEXT },
+    supervisorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "requests",

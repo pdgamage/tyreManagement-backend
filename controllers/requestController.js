@@ -51,7 +51,11 @@ exports.createRequest = async (req, res) => {
     }
 
     // 1. Create the request
-    const result = await Request.create(requestData);
+    const { supervisorId, ...otherFields } = requestData;
+    const result = await Request.create({
+      ...otherFields,
+      supervisorId,
+    });
 
     // 2. Save image URLs in request_images table
     if (Array.isArray(requestData.images)) {

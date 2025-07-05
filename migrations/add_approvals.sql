@@ -9,7 +9,8 @@ ADD COLUMN engineer_approved BOOLEAN DEFAULT FALSE,
 ADD COLUMN engineer_notes TEXT,
 ADD COLUMN engineer_timestamp DATETIME,
 ADD COLUMN order_placed BOOLEAN DEFAULT FALSE,
-ADD COLUMN order_timestamp DATETIME;
-ADD COLUMN supervisor_notes TEXT;
+ADD COLUMN order_timestamp DATETIME,
+ADD COLUMN supervisor_notes TEXT,
 ADD COLUMN technical_manager_note TEXT,
-ADD COLUMN engineer_note TEXT;
+ADD COLUMN engineer_note TEXT,
+ADD COLUMN supervisorId INTEGER REFERENCES Users(id);

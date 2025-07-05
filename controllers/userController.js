@@ -1,0 +1,10 @@
+const { User } = require("../models");
+
+exports.getSupervisors = async (req, res) => {
+  try {
+    const supervisors = await User.findAll({ where: { role: "supervisor" } });
+    res.json(supervisors);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch supervisors" });
+  }
+};

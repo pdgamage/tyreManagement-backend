@@ -9,7 +9,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "https://tyre-management-frontend.vercel.app", 
+    origin: "https://tyre-management-frontend.vercel.app",
     credentials: true,
   })
 );
@@ -26,6 +26,8 @@ app.use("/uploads", express.static(uploadDir));
 // Routes
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
