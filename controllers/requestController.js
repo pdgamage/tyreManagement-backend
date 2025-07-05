@@ -173,6 +173,18 @@ exports.getRequestsByUser = async (req, res) => {
   }
 };
 
+exports.getRequestsBySupervisor = async (req, res) => {
+  const { supervisorId } = req.params;
+  try {
+    const requests = await require("../models").Request.findAll({
+      where: { supervisorId },
+    });
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch supervisor requests" });
+  }
+};
+
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;

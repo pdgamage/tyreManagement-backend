@@ -35,6 +35,12 @@ router.put("/:id/status", requestController.updateRequestStatus);
 // Get requests by user
 router.get("/user/:id", requestController.getRequestsByUser);
 
+// Get requests by supervisor
+router.get(
+  "/supervisor/:supervisorId",
+  requestController.getRequestsBySupervisor
+);
+
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
