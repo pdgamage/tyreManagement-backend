@@ -12,6 +12,7 @@ require("./models/User");
 require("./models/Vehicle");
 require("./models/Request");
 require("./models/RequestImage");
+require("./models/Supplier");
 
 // Test database connection
 async function testDbConnection() {

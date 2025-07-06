@@ -36,7 +36,8 @@ const RequestModel = sequelize.define(
         "customer-officer approved",
         "approved",
         "rejected",
-        "complete"
+        "complete",
+        "order placed"
       ),
       defaultValue: "pending",
     },
@@ -44,6 +45,8 @@ const RequestModel = sequelize.define(
     supervisor_notes: { type: DataTypes.TEXT },
     technical_manager_note: { type: DataTypes.TEXT },
     engineer_note: { type: DataTypes.TEXT },
+    order_placed: { type: DataTypes.BOOLEAN, defaultValue: false },
+    order_timestamp: { type: DataTypes.DATE },
     supervisorId: {
       type: DataTypes.INTEGER,
       allowNull: false, // or true if you want it optional
