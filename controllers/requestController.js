@@ -111,7 +111,8 @@ exports.getRequestById = async (req, res) => {
 
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status, notes } = req.body;
+    const { status, notes, role } = req.body;
+    console.log('Update request status called with:', { id: req.params.id, status, notes, role });
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -144,14 +145,23 @@ exports.updateRequestStatus = async (req, res) => {
     }
     if (
       status === "technical-manager approved" ||
-      (status === "rejected" && req.body.role === "technical-manager")
+      (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))
     ) {
       request.technical_manager_note = notes;
     }
+    if (
+      status === "engineer approved" ||
+      status === "complete" ||
+      (status === "rejected" && req.body.role === "engineer")
+    ) {
+      request.engineer_note = notes;
+    }
     await request.save();
+    console.log('Request updated successfully:', request.toJSON());
     res.json({ message: "Request status updated successfully", request });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error updating request status:', error);
+    res.status(500).json({ error: "Internal server error", details: error.message });
   }
 };
 
