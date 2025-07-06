@@ -32,7 +32,7 @@ const RequestModel = sequelize.define(
         "pending",
         "supervisor approved",
         "technical-manager approved",
-        " engineer approved",
+        "engineer approved",
         "customer-officer approved",
         "approved",
         "rejected",
