@@ -26,6 +26,7 @@ app.use("/uploads", express.static(uploadDir));
 // Routes
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
+app.use("/api/suppliers", require("./routes/supplierRoutes"));
 const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 

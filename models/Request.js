@@ -36,7 +36,8 @@ const RequestModel = sequelize.define(
         "customer-officer approved",
         "approved",
         "rejected",
-        "complete"
+        "complete",
+        "order placed"
       ),
       defaultValue: "pending",
     },
