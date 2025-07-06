@@ -1,8 +1,6 @@
 const Request = require("../models/Request");
 const RequestImage = require("../models/RequestImage");
 const { Request: RequestModel } = require("../models");
-const { Supplier: SupplierClass } = require("../models/Supplier");
-const OrderEmailService = require("../utils/orderEmailService");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -113,8 +111,7 @@ exports.getRequestById = async (req, res) => {
 
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status, notes, role } = req.body;
-    console.log('Update request status called with:', { id: req.params.id, status, notes, role });
+    const { status, notes } = req.body;
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -147,23 +144,14 @@ exports.updateRequestStatus = async (req, res) => {
     }
     if (
       status === "technical-manager approved" ||
-      (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))
+      (status === "rejected" && req.body.role === "technical-manager")
     ) {
       request.technical_manager_note = notes;
     }
-    if (
-      status === "engineer approved" ||
-      status === "complete" ||
-      (status === "rejected" && req.body.role === "engineer")
-    ) {
-      request.engineer_note = notes;
-    }
     await request.save();
-    console.log('Request updated successfully:', request.toJSON());
     res.json({ message: "Request status updated successfully", request });
   } catch (error) {
-    console.error('Error updating request status:', error);
-    res.status(500).json({ error: "Internal server error", details: error.message });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -213,55 +201,5 @@ exports.deleteRequest = async (req, res) => {
   } catch (error) {
     console.error("Error deleting request:", error);
     res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-exports.placeOrder = async (req, res) => {
-  try {
-    const requestId = req.params.id;
-    const { supplierId, orderNotes } = req.body;
-
-    // Validate input
-    if (!supplierId) {
-      return res.status(400).json({ error: "Supplier ID is required" });
-    }
-
-    // Get the request
-    const request = await RequestModel.findByPk(requestId);
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
-
-    // Check if request is complete
-    if (request.status !== "complete") {
-      return res.status(400).json({ error: "Only completed requests can have orders placed" });
-    }
-
-    // Get the supplier
-    const supplier = await SupplierClass.getById(supplierId);
-    if (!supplier) {
-      return res.status(404).json({ error: "Supplier not found" });
-    }
-
-    // Send order email to supplier
-    await OrderEmailService.sendOrderToSupplier(supplier, request, {
-      orderNotes: orderNotes || "",
-      orderDate: new Date()
-    });
-
-    // Update request to mark order as placed
-    request.order_placed = true;
-    request.order_timestamp = new Date();
-    request.status = "order placed";
-    await request.save();
-
-    res.json({
-      message: "Order placed successfully",
-      supplier: supplier.name,
-      email: supplier.email
-    });
-  } catch (error) {
-    console.error("Error placing order:", error);
-    res.status(500).json({ error: "Failed to place order", details: error.message });
   }
 };
