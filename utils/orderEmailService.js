@@ -108,15 +108,30 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
       `.trim()
     };
 
-    // Send email using FormsFree - use the full URL from database
-    let formspreeUrl = supplier.formsfree_key;
 
-    // If the key doesn't include the full URL, construct it
-    if (!formspreeUrl.startsWith('http')) {
-      formspreeUrl = `https://formspree.io/f/${supplier.formsfree_key}`;
+    // Ensure the formsfree_key is just the ID, not a full URL
+    let formspreeUrl = supplier.formsfree_key;
+    if (formspreeUrl.startsWith('http')) {
+      // Extract the ID if a full URL is stored
+      const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
+      formspreeUrl = match ? match[1] : formspreeUrl;
     }
+    // Always use the correct URL format
+    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
     console.log('Sending to FormsFree URL:', formspreeUrl);
+    console.log('Form fields:', {
+      email: supplier.email,
+      subject: emailData.subject,
+      message: emailData.message,
+      _replyto: 'noreply@tyremanagement.com',
+      _subject: emailData.subject,
+      vehicle_number: request.vehicleNumber,
+      tire_size: request.tireSizeRequired,
+      quantity: request.quantity,
+      requester_name: request.requesterName,
+      requester_email: request.requesterEmail
+    });
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
@@ -130,7 +145,6 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         message: emailData.message,
         _replyto: 'noreply@tyremanagement.com',
         _subject: emailData.subject,
-        // Add all the order details as form fields
         vehicle_number: request.vehicleNumber,
         tire_size: request.tireSizeRequired,
         quantity: request.quantity,
