@@ -1,6 +1,6 @@
-const Request = require("../models/Request");
 const RequestImage = require("../models/RequestImage");
-const { Request: RequestModel } = require("../models");
+const { Request } = require("../models");
+const { pool } = require("../config/db");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -133,6 +133,10 @@ exports.updateRequestStatus = async (req, res) => {
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
+
+    console.log("Found request:", request.id, "current status:", request.status);
+    console.log("Updating to status:", status, "with role:", req.body.role);
+
     request.status = status;
 
     // Save notes to the correct column
@@ -155,10 +159,62 @@ exports.updateRequestStatus = async (req, res) => {
     ) {
       request.engineer_note = notes;
     }
-    await request.save();
-    res.json({ message: "Request status updated successfully", request });
+
+    console.log("Attempting to save request with status:", status);
+    console.log("Request data before save:", {
+      id: request.id,
+      status: request.status,
+      supervisor_notes: request.supervisor_notes,
+      technical_manager_note: request.technical_manager_note,
+      engineer_note: request.engineer_note
+    });
+
+    try {
+      await request.save();
+      console.log("Request saved successfully with Sequelize");
+    } catch (sequelizeError) {
+      console.log("Sequelize save failed, trying raw SQL:", sequelizeError.message);
+
+      // Fallback to raw SQL update
+      let updateQuery = "UPDATE requests SET status = ?";
+      let params = [status];
+
+      if (status === "supervisor approved" || (status === "rejected" && req.body.role === "supervisor")) {
+        updateQuery += ", supervisor_notes = ?";
+        params.push(notes);
+      }
+      if (status === "technical-manager approved" || (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))) {
+        updateQuery += ", technical_manager_note = ?";
+        params.push(notes);
+      }
+      if (status === "engineer approved" || status === "complete" || (status === "rejected" && req.body.role === "engineer")) {
+        updateQuery += ", engineer_note = ?";
+        params.push(notes);
+      }
+
+      updateQuery += " WHERE id = ?";
+      params.push(req.params.id);
+
+      console.log("Executing raw SQL:", updateQuery, params);
+      await pool.query(updateQuery, params);
+      console.log("Raw SQL update successful");
+    }
+
+    // Fetch the updated request
+    const updatedRequest = await Request.findByPk(req.params.id);
+    res.json({ message: "Request status updated successfully", request: updatedRequest });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error updating request status:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error.sql
+    });
+    res.status(500).json({
+      error: "Internal server error",
+      details: error.message,
+      sql: error.sql
+    });
   }
 };
 
