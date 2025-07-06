@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+// Using built-in fetch API (Node.js 18+)
 
 class OrderEmailService {
   static async sendOrderToSupplier(supplier, request, orderDetails) {
