@@ -108,19 +108,43 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
       `.trim()
     };
 
-    // Send email using FormsFree
-    const response = await fetch(`https://formspree.io/f/${supplier.formsfree_key}`, {
+    // Send email using FormsFree - use the full URL from database
+    let formspreeUrl = supplier.formsfree_key;
+
+    // If the key doesn't include the full URL, construct it
+    if (!formspreeUrl.startsWith('http')) {
+      formspreeUrl = `https://formspree.io/f/${supplier.formsfree_key}`;
+    }
+
+    console.log('Sending to FormsFree URL:', formspreeUrl);
+
+    const response = await fetch(formspreeUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(emailData)
+      body: new URLSearchParams({
+        email: supplier.email,
+        subject: emailData.subject,
+        message: emailData.message,
+        _replyto: 'noreply@tyremanagement.com',
+        _subject: emailData.subject,
+        // Add all the order details as form fields
+        vehicle_number: request.vehicleNumber,
+        tire_size: request.tireSizeRequired,
+        quantity: request.quantity,
+        requester_name: request.requesterName,
+        requester_email: request.requesterEmail
+      })
     });
+
+    console.log('FormsFree response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`FormsFree API error: ${response.status} - ${errorText}`);
+      console.error('FormsFree error response:', errorText);
+      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
     }
 
     const result = await response.json();
