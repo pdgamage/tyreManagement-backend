@@ -144,9 +144,16 @@ exports.updateRequestStatus = async (req, res) => {
     }
     if (
       status === "technical-manager approved" ||
-      (status === "rejected" && req.body.role === "technical-manager")
+      (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))
     ) {
       request.technical_manager_note = notes;
+    }
+    if (
+      status === "engineer approved" ||
+      status === "complete" ||
+      (status === "rejected" && req.body.role === "engineer")
+    ) {
+      request.engineer_note = notes;
     }
     await request.save();
     res.json({ message: "Request status updated successfully", request });
