@@ -136,20 +136,19 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     const response = await fetch(formspreeUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams({
-        email: supplier.email,
-        subject: emailData.subject,
+      body: JSON.stringify({
+        name: request.requesterName,
+        email: request.requesterEmail,
         message: emailData.message,
         _replyto: 'noreply@tyremanagement.com',
         _subject: emailData.subject,
         vehicle_number: request.vehicleNumber,
         tire_size: request.tireSizeRequired,
         quantity: request.quantity,
-        requester_name: request.requesterName,
-        requester_email: request.requesterEmail
+        supplier_email: supplier.email // custom field for tracking
       })
     });
 
