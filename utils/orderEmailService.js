@@ -125,15 +125,8 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     console.log('Sending to FormsFree URL:', formspreeUrl);
     console.log('Form fields:', {
       email: request.requesterEmail,
-      supplier_email: supplier.email,
       subject: emailData.subject,
-      message: emailData.message,
-      _replyto: request.requesterEmail,
-      _subject: emailData.subject,
-      vehicle_number: request.vehicleNumber,
-      tire_size: request.tireSizeRequired,
-      quantity: request.quantity,
-      requester_name: request.requesterName
+      message: emailData.message
     });
 
     const response = await fetch(formspreeUrl, {
@@ -143,16 +136,9 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Accept': 'application/json'
       },
       body: new URLSearchParams({
-        email: request.requesterEmail, // This is the sender (for reply)
-        supplier_email: supplier.email, // For reference only
+        email: request.requesterEmail,
         subject: emailData.subject,
-        message: emailData.message,
-        _replyto: request.requesterEmail,
-        _subject: emailData.subject,
-        vehicle_number: request.vehicleNumber,
-        tire_size: request.tireSizeRequired,
-        quantity: request.quantity,
-        requester_name: request.requesterName
+        message: emailData.message
       })
     });
 
