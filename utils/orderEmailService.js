@@ -1,10 +1,6 @@
 // Using built-in fetch API (Node.js 18+)
 
 async function sendOrderEmail(supplier, request, orderNotes = '') {
-  console.log('=== EMAIL SERVICE STARTED ===');
-  console.log('Supplier:', supplier.name, '| Email:', supplier.email);
-  console.log('Formspree Key:', supplier.formsfree_key);
-  console.log('Request ID:', request.id, '| Vehicle:', request.vehicleNumber);
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
@@ -113,70 +109,29 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     };
 
 
-    // Validate and extract Formspree form ID
-    if (!supplier.formsfree_key) {
-      throw new Error(`Supplier ${supplier.name} does not have a Formspree key configured`);
+    // Ensure the formsfree_key is just the ID, not a full URL
+    let formspreeUrl = supplier.formsfree_key;
+    if (formspreeUrl.startsWith('http')) {
+      // Extract the ID if a full URL is stored
+      const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
+      formspreeUrl = match ? match[1] : formspreeUrl;
     }
+    // Always use the correct URL format
+    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
-    let formspreeId = supplier.formsfree_key;
-
-    // Extract form ID from full URL if needed
-    if (formspreeId.startsWith('http')) {
-      const match = formspreeId.match(/\/f\/([a-zA-Z0-9]+)/);
-      if (match) {
-        formspreeId = match[1];
-      } else {
-        throw new Error(`Invalid Formspree URL format: ${formspreeId}`);
-      }
-    }
-
-    const formspreeUrl = `https://formspree.io/f/${formspreeId}`;
-    console.log('Final Formspree URL:', formspreeUrl);
-
-    // Prepare comprehensive form data for Formspree
-    const formFields = {
-      // Core email fields (required by Formspree)
+    console.log('Sending to FormsFree URL:', formspreeUrl);
+    console.log('Form fields:', {
+      email: supplier.email,
       subject: emailData.subject,
       message: emailData.message,
-      _replyto: request.requesterEmail, // Reply-to requester, not system
+      _replyto: 'noreply@tyremanagement.com',
       _subject: emailData.subject,
-
-      // Order details
-      request_id: request.id,
       vehicle_number: request.vehicleNumber,
-      vehicle_brand: request.vehicleBrand,
-      vehicle_model: request.vehicleModel,
-      tire_size_required: request.tireSizeRequired,
+      tire_size: request.tireSizeRequired,
       quantity: request.quantity,
-      tubes_quantity: request.tubesQuantity,
-
-      // Requester information
       requester_name: request.requesterName,
-      requester_email: request.requesterEmail,
-      requester_phone: request.requesterPhone,
-      user_section: request.userSection,
-      cost_center: request.costCenter,
-
-      // Vehicle information
-      present_km_reading: request.presentKmReading?.toLocaleString() || 'N/A',
-      previous_km_reading: request.previousKmReading?.toLocaleString() || 'N/A',
-      last_replacement_date: new Date(request.lastReplacementDate).toLocaleDateString(),
-      tire_wear_pattern: request.tireWearPattern,
-      existing_tire_make: request.existingTireMake,
-      request_reason: request.requestReason,
-
-      // Additional notes
-      order_notes: orderNotes || 'No additional notes',
-      comments: request.comments || 'N/A',
-
-      // Metadata
-      order_timestamp: new Date().toISOString(),
-      supplier_name: supplier.name,
-      supplier_email: supplier.email
-    };
-
-    console.log('Submitting to Formspree URL:', formspreeUrl);
-    console.log('Form fields count:', Object.keys(formFields).length);
+      requester_email: request.requesterEmail
+    });
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
@@ -184,37 +139,30 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams(formFields)
+      body: new URLSearchParams({
+        email: supplier.email,
+        subject: emailData.subject,
+        message: emailData.message,
+        _replyto: 'noreply@tyremanagement.com',
+        _subject: emailData.subject,
+        vehicle_number: request.vehicleNumber,
+        tire_size: request.tireSizeRequired,
+        quantity: request.quantity,
+        requester_name: request.requesterName,
+        requester_email: request.requesterEmail
+      })
     });
 
-    console.log('=== FORMSPREE RESPONSE ===');
-    console.log('Status:', response.status, response.statusText);
+    console.log('FormsFree response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('=== FORMSPREE ERROR ===');
-      console.error('Status:', response.status, response.statusText);
-      console.error('Error Response:', errorText);
-      console.error('Form URL:', formspreeUrl);
-      console.error('Supplier:', supplier.name, '|', supplier.email);
-
-      // Provide specific error messages for common Formspree issues
-      let errorMessage = `Formspree submission failed (${response.status})`;
-      if (response.status === 422) {
-        errorMessage += ' - Form validation error or unverified form';
-      } else if (response.status === 429) {
-        errorMessage += ' - Rate limit exceeded';
-      } else if (response.status === 403) {
-        errorMessage += ' - Form access denied';
-      }
-
-      throw new Error(`${errorMessage}: ${errorText}`);
+      console.error('FormsFree error response:', errorText);
+      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
     }
 
     const result = await response.json();
-    console.log('=== EMAIL SUCCESS ===');
-    console.log('Formspree response:', result);
-    console.log('Email sent to supplier:', supplier.name, '|', supplier.email);
+    console.log('Order email sent successfully:', result);
     
     return {
       success: true,
