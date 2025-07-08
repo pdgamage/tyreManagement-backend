@@ -119,18 +119,21 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     // Always use the correct URL format
     formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
+
+    // For Formspree, the 'email' field should be the requester's email, not the supplier's
+    // The supplier's email is set in the Formspree dashboard for each form
     console.log('Sending to FormsFree URL:', formspreeUrl);
     console.log('Form fields:', {
-      email: supplier.email,
+      email: request.requesterEmail,
+      supplier_email: supplier.email,
       subject: emailData.subject,
       message: emailData.message,
-      _replyto: 'noreply@tyremanagement.com',
+      _replyto: request.requesterEmail,
       _subject: emailData.subject,
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
-      requester_name: request.requesterName,
-      requester_email: request.requesterEmail
+      requester_name: request.requesterName
     });
 
     const response = await fetch(formspreeUrl, {
@@ -140,16 +143,16 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Accept': 'application/json'
       },
       body: new URLSearchParams({
-        email: supplier.email,
+        email: request.requesterEmail, // This is the sender (for reply)
+        supplier_email: supplier.email, // For reference only
         subject: emailData.subject,
         message: emailData.message,
-        _replyto: 'noreply@tyremanagement.com',
+        _replyto: request.requesterEmail,
         _subject: emailData.subject,
         vehicle_number: request.vehicleNumber,
         tire_size: request.tireSizeRequired,
         quantity: request.quantity,
-        requester_name: request.requesterName,
-        requester_email: request.requesterEmail
+        requester_name: request.requesterName
       })
     });
 
