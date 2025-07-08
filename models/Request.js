@@ -36,17 +36,8 @@ const RequestModel = sequelize.define(
         "customer-officer approved",
         "approved",
         "rejected",
-        "complete"
-      ),
-      defaultValue: "pending",
-    },
-    order_status: {
-      type: DataTypes.ENUM(
-        "pending",
-        "placed",
-        "shipped",
-        "delivered",
-        "cancelled"
+        "complete",
+        "order placed"
       ),
       defaultValue: "pending",
     },

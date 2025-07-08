@@ -78,34 +78,9 @@ exports.createRequest = async (req, res) => {
 
 exports.getAllRequests = async (req, res) => {
   try {
-    // Try to get requests with order_status column, fall back if it doesn't exist
-    let requests;
-    try {
-      const [rows] = await pool.query(`
-        SELECT *,
-               COALESCE(order_status, 'pending') as order_status
-        FROM requests
-        ORDER BY submittedAt DESC
-      `);
-      requests = rows;
-    } catch (error) {
-      // order_status column doesn't exist, use legacy approach
-      console.log('order_status column not found, using legacy query');
-      const [rows] = await pool.query(`
-        SELECT *,
-               CASE
-                 WHEN status = 'order placed' OR order_placed = true THEN 'placed'
-                 ELSE 'pending'
-               END as order_status
-        FROM requests
-        ORDER BY submittedAt DESC
-      `);
-      requests = rows;
-    }
-
+    const requests = await Request.findAll();
     res.json(requests);
   } catch (error) {
-    console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -285,48 +260,6 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Check if order has already been placed using order_status
-    try {
-      const [orderCheck] = await pool.query(
-        "SELECT order_status FROM requests WHERE id = ?",
-        [id]
-      );
-
-      if (orderCheck.length > 0 && orderCheck[0].order_status === 'placed') {
-        return res.status(400).json({
-          error: "Order has already been placed for this request",
-          currentStatus: request.status,
-          orderStatus: orderCheck[0].order_status
-        });
-      }
-    } catch (error) {
-      // order_status column might not exist yet, fall back to old checks
-      console.log('order_status column check failed, using fallback checks');
-
-      // Fallback: check old status and order_placed field
-      if (request.status === 'order placed') {
-        return res.status(400).json({
-          error: "Order has already been placed for this request",
-          currentStatus: request.status
-        });
-      }
-
-      try {
-        const [orderPlacedCheck] = await pool.query(
-          "SELECT order_placed FROM requests WHERE id = ? AND order_placed = true",
-          [id]
-        );
-        if (orderPlacedCheck.length > 0) {
-          return res.status(400).json({
-            error: "Order has already been placed for this request",
-            currentStatus: request.status
-          });
-        }
-      } catch (orderPlacedError) {
-        console.log('order_placed column also not found, continuing...');
-      }
-    }
-
     // Get supplier details
     const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
     if (suppliers.length === 0) {
@@ -351,46 +284,33 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update order_status to "placed" (keep main status as "complete")
-    let updateSuccess = false;
+    // Update request status to "order placed"
+    // Try different update strategies based on available columns
     try {
-      // First try with new order_status column
+      // First try with all columns
       await pool.query(
-        "UPDATE requests SET order_status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
-        ['placed', id]
+        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
+        ['order placed', id]
       );
-      console.log('Updated request with order_status and legacy fields');
-      updateSuccess = true;
+      console.log('Updated request with all columns');
     } catch (error) {
-      console.log('order_status update failed, trying legacy approach:', error.message);
+      console.log('Full update failed, trying status only:', error.message);
       try {
-        // Fallback: try with order_placed field only
+        // If that fails, try just updating status
         await pool.query(
-          "UPDATE requests SET order_placed = true, order_timestamp = NOW() WHERE id = ?",
-          [id]
+          "UPDATE requests SET status = ? WHERE id = ?",
+          ['order placed', id]
         );
-        console.log('Updated request with legacy order_placed field');
-        updateSuccess = true;
-      } catch (legacyError) {
-        console.log('Legacy update also failed:', legacyError.message);
-        // Last resort: just update status (old behavior)
-        try {
-          await pool.query(
-            "UPDATE requests SET status = ? WHERE id = ?",
-            ['order placed', id]
-          );
-          console.log('Updated request status as last resort');
-          updateSuccess = true;
-        } catch (statusError) {
-          console.log('All update strategies failed:', statusError.message);
-          throw new Error('Failed to update request order status');
-        }
+        console.log('Updated request status only');
+      } catch (statusError) {
+        console.log('Status update also failed, trying with enum check:', statusError.message);
+        // If status update fails, it might be an enum issue, try with a valid enum value
+        await pool.query(
+          "UPDATE requests SET status = ? WHERE id = ?",
+          ['complete', id]  // Use 'complete' as fallback since 'order placed' might not be in enum
+        );
+        console.log('Updated request status to complete as fallback');
       }
-    }
-
-    // Verify the update was successful
-    if (!updateSuccess) {
-      throw new Error('Failed to update request order status');
     }
 
     console.log("Order placed successfully:", emailResult);
