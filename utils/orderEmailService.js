@@ -136,19 +136,20 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     const response = await fetch(formspreeUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        name: request.requesterName,
-        email: request.requesterEmail,
-        subject: emailData.subject, // regular subject field
-        _subject: emailData.subject, // legacy subject field (supported by Formspree)
+      body: new URLSearchParams({
+        email: supplier.email,
+        subject: emailData.subject,
         message: emailData.message,
-        _replyto: request.requesterEmail,
+        _replyto: 'noreply@tyremanagement.com',
+        _subject: emailData.subject,
         vehicle_number: request.vehicleNumber,
         tire_size: request.tireSizeRequired,
-        quantity: request.quantity
+        quantity: request.quantity,
+        requester_name: request.requesterName,
+        requester_email: request.requesterEmail
       })
     });
 
@@ -157,14 +158,7 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     if (!response.ok) {
       const errorText = await response.text();
       console.error('FormsFree error response:', errorText);
-      let serverMessage = '';
-      try {
-        const parsed = JSON.parse(errorText);
-        serverMessage = parsed?.error || JSON.stringify(parsed);
-      } catch (_) {
-        serverMessage = errorText;
-      }
-      throw new Error(`FormsFree API error: ${response.status} - ${serverMessage}`);
+      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
     }
 
     const result = await response.json();
