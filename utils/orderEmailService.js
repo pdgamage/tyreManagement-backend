@@ -9,7 +9,7 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       // Supplier information
       supplier_name: supplier.name,
       supplier_email: supplier.email,
-      supplier_phone: supplier.phone || 'N/A',
+      supplier_phone: supplier.phone || '',
       
       // Request details
       request_id: request.id,
