@@ -142,13 +142,13 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
       body: JSON.stringify({
         name: request.requesterName,
         email: request.requesterEmail,
+        subject: emailData.subject, // regular subject field
+        _subject: emailData.subject, // legacy subject field (supported by Formspree)
         message: emailData.message,
-        _replyto: 'noreply@tyremanagement.com',
-        _subject: emailData.subject,
+        _replyto: request.requesterEmail,
         vehicle_number: request.vehicleNumber,
         tire_size: request.tireSizeRequired,
-        quantity: request.quantity,
-        supplier_email: supplier.email // custom field for tracking
+        quantity: request.quantity
       })
     });
 
@@ -157,7 +157,14 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     if (!response.ok) {
       const errorText = await response.text();
       console.error('FormsFree error response:', errorText);
-      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
+      let serverMessage = '';
+      try {
+        const parsed = JSON.parse(errorText);
+        serverMessage = parsed?.error || JSON.stringify(parsed);
+      } catch (_) {
+        serverMessage = errorText;
+      }
+      throw new Error(`FormsFree API error: ${response.status} - ${serverMessage}`);
     }
 
     const result = await response.json();
