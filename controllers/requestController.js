@@ -261,16 +261,33 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Get supplier details
-    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
-    if (suppliers.length === 0) {
-      return res.status(404).json({ error: "Supplier not found" });
-    }
-    const supplier = suppliers[0];
+    console.log(`Fetching supplier with ID: ${supplierId}`);
 
-    // Validate supplier has FormsFree key
-    if (!supplier.formsfree_key) {
-      return res.status(400).json({ error: "Supplier does not have a valid FormsFree key configured" });
+    // Try different possible column names for the Formspree key
+    let supplier = null;
+    try {
+      const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
+      if (suppliers.length === 0) {
+        console.log(`Supplier with ID ${supplierId} not found`);
+        return res.status(404).json({ error: "Supplier not found" });
+      }
+      supplier = suppliers[0];
+      console.log('Found supplier:', JSON.stringify(supplier, null, 2));
+    } catch (dbError) {
+      console.error('Database error fetching supplier:', dbError);
+      return res.status(500).json({ error: "Database error fetching supplier" });
     }
+
+    // Validate supplier has Formspree key (check multiple possible column names)
+    const formspreeKey = supplier.formsfree_key || supplier.formspree_key || supplier.forms_free_key || supplier.email_key;
+    if (!formspreeKey) {
+      console.log('Supplier does not have any Formspree key column:', supplier);
+      return res.status(400).json({ error: "Supplier does not have a valid Formspree key configured" });
+    }
+    console.log(`Supplier Formspree key: ${formspreeKey}`);
+
+    // Add the key to supplier object for consistency
+    supplier.formsfree_key = formspreeKey;
 
     // Send order email to supplier
     let emailResult;
@@ -350,6 +367,44 @@ exports.placeOrder = async (req, res) => {
         error: err.message
       });
     }
+  }
+};
+
+// Test endpoint to debug email functionality
+exports.testEmail = async (req, res) => {
+  try {
+    const { supplierId, requestId } = req.body;
+
+    console.log(`Testing email for supplier ${supplierId} and request ${requestId}`);
+
+    // Get supplier details
+    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
+    if (suppliers.length === 0) {
+      return res.status(404).json({ error: "Supplier not found" });
+    }
+    const supplier = suppliers[0];
+
+    // Get request details
+    const request = await Request.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Test email sending
+    const emailResult = await sendOrderEmail(supplier, request, "Test order notes");
+
+    res.json({
+      message: "Test email sent successfully",
+      supplier: supplier,
+      emailResult: emailResult
+    });
+
+  } catch (error) {
+    console.error("Error in test email:", error);
+    res.status(500).json({
+      message: "Test email failed",
+      error: error.message
+    });
   }
 };
 
