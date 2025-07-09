@@ -3,8 +3,12 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const passport = require("./middleware/azureAuth");
+const { syncAndAlterDatabase } = require("./config/db");
 
 const app = express();
+
+// Sync and alter database schema before starting the server
+syncAndAlterDatabase();
 
 // Middleware
 app.use(
@@ -26,7 +30,6 @@ app.use("/uploads", express.static(uploadDir));
 // Routes
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
-app.use("/api/suppliers", require("./routes/supplierRoutes"));
 const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 

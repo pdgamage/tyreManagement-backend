@@ -1,7 +1,6 @@
 const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
 const { pool } = require("../config/db");
-const { sendOrderEmail } = require("../utils/orderEmailService");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -110,36 +109,6 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
-// New helper function for sending order confirmation
-async function sendOrderConfirmation(req, res, request, supplier, orderNotes) {
-  try {
-    // Send order email to supplier
-    const emailResult = await sendOrderEmail(supplier, request, orderNotes);
-
-    // Update request status to "order placed"
-    request.status = 'order placed';
-    await request.save();
-
-    console.log("Order placed successfully:", emailResult);
-
-    res.json({
-      message: "Order placed successfully",
-      supplier: {
-        id: supplier.id,
-        name: supplier.name,
-        email: supplier.email
-      },
-      emailResult: emailResult,
-      orderNotes: orderNotes
-    });
-  } catch (err) {
-    console.error("Error in sendOrderConfirmation:", err);
-    res.status(500).json({
-      message: "Failed to place order",
-      error: err.message
-    });
-  }
-}
 
 exports.updateRequestStatus = async (req, res) => {
   try {
@@ -155,7 +124,6 @@ exports.updateRequestStatus = async (req, res) => {
       "approved",
       "rejected",
       "complete",
-      "order placed",
     ];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
@@ -170,18 +138,6 @@ exports.updateRequestStatus = async (req, res) => {
     console.log("Found request:", request.id, "current status:", request.status);
     console.log("Updating to status:", status, "with role:", req.body.role);
 
-    // If status is 'order placed', handle it as a special case
-    if (status === 'order placed') {
-      if (!supplierId) {
-        return res.status(400).json({ error: "Supplier ID is required for placing an order" });
-      }
-      const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
-      if (suppliers.length === 0) {
-        return res.status(404).json({ error: "Supplier not found" });
-      }
-      const supplier = suppliers[0];
-      return sendOrderConfirmation(req, res, request, supplier, orderNotes || '');
-    }
 
     request.status = status;
 
@@ -230,56 +186,6 @@ exports.getRequestsByUser = async (req, res) => {
   }
 };
 
-exports.placeOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { supplierId, orderNotes } = req.body;
-
-    console.log(`Placing order for request ${id} with supplier ${supplierId}`);
-
-    // Validate required fields
-    if (!supplierId) {
-      return res.status(400).json({ error: "Supplier ID is required" });
-    }
-
-    // Get the request details
-    const request = await Request.findByPk(id);
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
-
-    // Check if request is complete (ready for order)
-    if (request.status !== 'complete') {
-      return res.status(400).json({
-        error: "Request must be complete before placing order",
-        currentStatus: request.status
-      });
-    }
-
-    // Get supplier details
-    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
-    if (suppliers.length === 0) {
-      return res.status(404).json({ error: "Supplier not found" });
-    }
-    const supplier = suppliers[0];
-
-    // Validate supplier has FormsFree key
-    if (!supplier.formsfree_key) {
-      return res.status(400).json({ error: "Supplier does not have a valid FormsFree key configured" });
-    }
-
-    // Delegate to the new helper function
-    await sendOrderConfirmation(req, res, request, supplier, orderNotes);
-
-  } catch (err) {
-    console.error("Error placing order:", err);
-
-    res.status(500).json({
-      message: "Error placing order",
-      error: err.message
-    });
-  }
-};
 
 exports.deleteRequest = async (req, res) => {
   try {

@@ -35,8 +35,6 @@ router.put("/:id/status", requestController.updateRequestStatus);
 // Get requests by user
 router.get("/user/:id", requestController.getRequestsByUser);
 
-// Place order for an approved request
-router.post("/:id/place-order", requestController.placeOrder);
 
 // Delete a request
 router.delete("/requests/:id", requestController.deleteRequest);
