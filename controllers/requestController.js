@@ -278,16 +278,12 @@ exports.placeOrder = async (req, res) => {
       return res.status(500).json({ error: "Database error fetching supplier" });
     }
 
-    // Validate supplier has Formspree key (check multiple possible column names)
-    const formspreeKey = supplier.formsfree_key || supplier.formspree_key || supplier.forms_free_key || supplier.email_key;
-    if (!formspreeKey) {
-      console.log('Supplier does not have any Formspree key column:', supplier);
+    // Validate supplier has Formspree key
+    if (!supplier.formsfree_key) {
+      console.log('Supplier does not have formsfree_key:', supplier);
       return res.status(400).json({ error: "Supplier does not have a valid Formspree key configured" });
     }
-    console.log(`Supplier Formspree key: ${formspreeKey}`);
-
-    // Add the key to supplier object for consistency
-    supplier.formsfree_key = formspreeKey;
+    console.log(`Supplier Formspree key: ${supplier.formsfree_key}`);
 
     // Send order email to supplier
     let emailResult;

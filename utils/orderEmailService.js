@@ -1,4 +1,5 @@
-// Using built-in fetch API (Node.js 18+)
+// Using isomorphic-fetch for compatibility
+require('isomorphic-fetch');
 
 async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
@@ -116,38 +117,56 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
       throw new Error('Supplier does not have a Formspree key configured');
     }
 
-    // Ensure the formsfree_key is just the ID, not a full URL
+    // Handle both full URLs and form IDs
     let formspreeUrl = supplier.formsfree_key;
     console.log('Original Formspree key:', formspreeUrl);
 
-    if (formspreeUrl.startsWith('http')) {
-      // Extract the ID if a full URL is stored
+    if (formspreeUrl.startsWith('https://formspree.io/f/')) {
+      // Already a full URL, use as is
+      console.log('Using full Formspree URL as provided');
+    } else if (formspreeUrl.startsWith('http')) {
+      // Extract the ID if a different URL format is stored
       const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
-      formspreeUrl = match ? match[1] : formspreeUrl;
-      console.log('Extracted Formspree ID from URL:', formspreeUrl);
+      if (match) {
+        formspreeUrl = `https://formspree.io/f/${match[1]}`;
+        console.log('Extracted and rebuilt Formspree URL:', formspreeUrl);
+      } else {
+        throw new Error(`Invalid Formspree URL format: ${formspreeUrl}`);
+      }
+    } else {
+      // Assume it's just the form ID
+      if (!/^[a-zA-Z0-9]+$/.test(formspreeUrl)) {
+        throw new Error(`Invalid Formspree key format: ${formspreeUrl}. Expected alphanumeric string or full URL.`);
+      }
+      formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
+      console.log('Built Formspree URL from ID:', formspreeUrl);
     }
-
-    // Validate the Formspree ID format (should be alphanumeric)
-    if (!/^[a-zA-Z0-9]+$/.test(formspreeUrl)) {
-      throw new Error(`Invalid Formspree key format: ${formspreeUrl}. Expected alphanumeric string.`);
-    }
-
-    // Always use the correct URL format
-    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
     console.log('Final Formspree URL:', formspreeUrl);
-    console.log('Form fields:', {
-      email: supplier.email,
+    const formData = {
+      // Formspree will send the email to the form owner (supplier)
+      // The 'email' field is the sender's email for reply purposes
+      email: request.requesterEmail,
+      name: request.requesterName,
       subject: emailData.subject,
       message: emailData.message,
-      _replyto: 'noreply@tyremanagement.com',
+      _replyto: request.requesterEmail,
       _subject: emailData.subject,
+
+      // Additional order details
+      supplier_name: supplier.name,
+      supplier_email: supplier.email,
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
       requester_name: request.requesterName,
-      requester_email: request.requesterEmail
-    });
+      requester_email: request.requesterEmail,
+      requester_phone: request.requesterPhone,
+      user_section: request.userSection,
+      cost_center: request.costCenter
+    };
+
+    console.log('Form fields to be sent:', JSON.stringify(formData, null, 2));
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
@@ -155,18 +174,7 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams({
-        email: supplier.email,
-        subject: emailData.subject,
-        message: emailData.message,
-        _replyto: 'noreply@tyremanagement.com',
-        _subject: emailData.subject,
-        vehicle_number: request.vehicleNumber,
-        tire_size: request.tireSizeRequired,
-        quantity: request.quantity,
-        requester_name: request.requesterName,
-        requester_email: request.requesterEmail
-      })
+      body: new URLSearchParams(formData)
     });
 
     console.log('Formspree response status:', response.status);
