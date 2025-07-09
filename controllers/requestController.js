@@ -276,11 +276,17 @@ exports.placeOrder = async (req, res) => {
     let emailResult;
     try {
       emailResult = await sendOrderEmail(supplier, request, orderNotes);
+      console.log("Formspree email result:", emailResult);
     } catch (emailError) {
       console.error("Error sending email:", emailError);
+      // Log full error object for debugging
+      if (emailError.response) {
+        console.error("Formspree response:", emailError.response.data);
+      }
       return res.status(500).json({
         message: "Failed to send order email",
-        error: emailError.message
+        error: emailError.message,
+        details: emailError.response ? emailError.response.data : undefined
       });
     }
 
