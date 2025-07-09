@@ -1,4 +1,5 @@
-// Using built-in fetch API (Node.js 18+)
+// Using isomorphic-fetch for Node.js compatibility
+const fetch = require('isomorphic-fetch');
 
 async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
@@ -109,56 +110,85 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     };
 
 
-    // Ensure the formsfree_key is just the ID, not a full URL
-    let formspreeUrl = supplier.formsfree_key;
-    if (formspreeUrl.startsWith('http')) {
-      // Extract the ID if a full URL is stored
-      const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
-      formspreeUrl = match ? match[1] : formspreeUrl;
-    }
-    // Always use the correct URL format
-    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
+    // Handle different formats of formsfree_key
+    let formspreeUrl = supplier.formsfree_key.trim();
 
-    console.log('Sending to FormsFree URL:', formspreeUrl);
-    console.log('Form fields:', {
+    // If it's already a full URL, use it directly
+    if (formspreeUrl.startsWith('https://formspree.io/f/')) {
+      // Already in correct format
+    } else if (formspreeUrl.startsWith('http')) {
+      // Some other URL format, extract the form ID
+      const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
+      if (match) {
+        formspreeUrl = `https://formspree.io/f/${match[1]}`;
+      } else {
+        throw new Error('Invalid Formspree URL format');
+      }
+    } else {
+      // Just the form ID, construct the full URL
+      formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
+    }
+
+    console.log('Sending to Formspree URL:', formspreeUrl);
+    console.log('Supplier details:', {
+      name: supplier.name,
+      email: supplier.email,
+      formsfree_key: supplier.formsfree_key
+    });
+
+    // Prepare the email payload for Formspree
+    const formspreePayload = {
       email: supplier.email,
       subject: emailData.subject,
       message: emailData.message,
-      _replyto: 'noreply@tyremanagement.com',
+      _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
       _subject: emailData.subject,
+      // Additional fields for the supplier
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
+      tubes_quantity: request.tubesQuantity,
       requester_name: request.requesterName,
-      requester_email: request.requesterEmail
+      requester_email: request.requesterEmail,
+      requester_phone: request.requesterPhone,
+      order_notes: orderNotes || 'None'
+    };
+
+    console.log('Formspree payload keys:', Object.keys(formspreePayload));
+    console.log('Formspree payload sample:', {
+      email: formspreePayload.email,
+      subject: formspreePayload.subject,
+      vehicle_number: formspreePayload.vehicle_number,
+      tire_size: formspreePayload.tire_size
     });
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams({
-        email: supplier.email,
-        subject: emailData.subject,
-        message: emailData.message,
-        _replyto: 'noreply@tyremanagement.com',
-        _subject: emailData.subject,
-        vehicle_number: request.vehicleNumber,
-        tire_size: request.tireSizeRequired,
-        quantity: request.quantity,
-        requester_name: request.requesterName,
-        requester_email: request.requesterEmail
-      })
+      body: JSON.stringify(formspreePayload)
     });
 
-    console.log('FormsFree response status:', response.status);
+    console.log('Formspree response status:', response.status);
+    console.log('Formspree response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('FormsFree error response:', errorText);
-      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
+      console.error('Formspree error response:', errorText);
+      console.error('Formspree error status:', response.status);
+      console.error('Formspree error statusText:', response.statusText);
+
+      // Try to parse error as JSON if possible
+      let errorDetails = errorText;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch (e) {
+        // Keep as text if not JSON
+      }
+
+      throw new Error(`Formspree API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorDetails)}`);
     }
 
     const result = await response.json();
