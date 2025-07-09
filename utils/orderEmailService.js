@@ -122,11 +122,38 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
 
     // For Formspree, the 'email' field should be the requester's email, not the supplier's
     // The supplier's email is set in the Formspree dashboard for each form
-    console.log('Form fields:', {
+    // Send all fields as in your previous working setup
+    const formFields = {
       email: request.requesterEmail,
       _subject: emailData.subject,
-      message: emailData.message
-    });
+      message: emailData.message,
+      vehicle_number: request.vehicleNumber,
+      tire_size: request.tireSizeRequired,
+      quantity: request.quantity,
+      tubes_quantity: request.tubesQuantity,
+      requester_name: request.requesterName,
+      requester_email: request.requesterEmail,
+      requester_phone: request.requesterPhone,
+      user_section: request.userSection,
+      vehicle_brand: request.vehicleBrand,
+      vehicle_model: request.vehicleModel,
+      vehicle_year: request.year,
+      existing_tire_make: request.existingTireMake,
+      tire_wear_pattern: request.tireWearPattern,
+      cost_center: request.costCenter,
+      present_km_reading: request.presentKmReading?.toLocaleString() || 'N/A',
+      previous_km_reading: request.previousKmReading?.toLocaleString() || 'N/A',
+      last_replacement_date: new Date(request.lastReplacementDate).toLocaleDateString(),
+      request_reason: request.requestReason,
+      comments: request.comments || 'N/A',
+      order_notes: orderNotes || 'N/A',
+      supervisor_notes: request.supervisor_notes || 'N/A',
+      technical_manager_notes: request.technical_manager_note || 'N/A',
+      engineer_notes: request.engineer_note || 'N/A',
+      order_date: new Date().toLocaleDateString(),
+      order_time: new Date().toLocaleTimeString(),
+    };
+    console.log('Form fields:', formFields);
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
@@ -134,11 +161,7 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams({
-        email: request.requesterEmail,
-        _subject: emailData.subject,
-        message: emailData.message
-      })
+      body: new URLSearchParams(formFields)
     });
 
     console.log('FormsFree response status:', response.status);
