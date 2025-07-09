@@ -17,7 +17,21 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
 
     // Prepare the email data (your existing emailData preparation remains the same)
     const emailData = {
-      // ... (your existing emailData object)
+      subject: `New Tyre Request from ${request.requesterName}`,
+      message: `
+        <h1>New Tyre Request</h1>
+        <p>A new tyre request has been submitted by ${request.requesterName}.</p>
+        <h2>Request Details:</h2>
+        <ul>
+          <li><strong>Vehicle Number:</strong> ${request.vehicleNumber}</li>
+          <li><strong>Tyre Size Required:</strong> ${request.tireSizeRequired}</li>
+          <li><strong>Quantity:</strong> ${request.quantity}</li>
+          <li><strong>Requester Name:</strong> ${request.requesterName}</li>
+          <li><strong>Requester Email:</strong> ${request.requesterEmail}</li>
+        </ul>
+        <h2>Order Notes:</h2>
+        <p>${orderNotes || 'No additional notes.'}</p>
+      `
     };
 
     // Process FormsFree URL
@@ -102,6 +116,3 @@ module.exports = {
   sendOrderEmail
 };
 
-module.exports = {
-  sendOrderEmail
-};
