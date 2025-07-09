@@ -1,19 +1,59 @@
-
-// Minimal, robust supplier order email service for Formspree
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// Using built-in fetch API (Node.js 18+)
 
 async function sendOrderEmail(supplier, request, orderNotes = '') {
-  // 1. Get the correct Formspree endpoint
-  let formspreeUrl = supplier.formsfree_key;
-  if (formspreeUrl.startsWith('http')) {
-    const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
-    formspreeUrl = match ? match[1] : formspreeUrl;
-  }
-  formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
-
-  // 2. Compose the message
-  const subject = `Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
-  const message = `
+  try {
+    console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
+    
+    // Prepare the email data
+    const emailData = {
+      // Supplier information
+      supplier_name: supplier.name,
+      supplier_email: supplier.email,
+      supplier_phone: supplier.phone || 'N/A',
+      
+      // Request details
+      request_id: request.id,
+      vehicle_number: request.vehicleNumber,
+      vehicle_brand: request.vehicleBrand,
+      vehicle_model: request.vehicleModel,
+      vehicle_year: request.year,
+      
+      // Requester information
+      requester_name: request.requesterName,
+      requester_email: request.requesterEmail,
+      requester_phone: request.requesterPhone,
+      user_section: request.userSection,
+      
+      // Tire specifications
+      tire_size_required: request.tireSizeRequired,
+      quantity: request.quantity,
+      tubes_quantity: request.tubesQuantity,
+      existing_tire_make: request.existingTireMake,
+      tire_wear_pattern: request.tireWearPattern,
+      cost_center: request.costCenter,
+      
+      // Vehicle readings
+      present_km_reading: request.presentKmReading?.toLocaleString() || 'N/A',
+      previous_km_reading: request.previousKmReading?.toLocaleString() || 'N/A',
+      last_replacement_date: new Date(request.lastReplacementDate).toLocaleDateString(),
+      
+      // Request information
+      request_reason: request.requestReason,
+      comments: request.comments || 'N/A',
+      order_notes: orderNotes || 'N/A',
+      
+      // Approval information
+      supervisor_notes: request.supervisor_notes || 'N/A',
+      technical_manager_notes: request.technical_manager_note || 'N/A',
+      engineer_notes: request.engineer_note || 'N/A',
+      
+      // Order details
+      order_date: new Date().toLocaleDateString(),
+      order_time: new Date().toLocaleTimeString(),
+      
+      // Email subject and content
+      subject: `Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`,
+      message: `
 Dear ${supplier.name},
 
 We would like to place an order for tires with the following specifications:
@@ -65,38 +105,77 @@ Thank you for your service.
 Best regards,
 Tire Management System
 Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
-  `.trim();
+      `.trim()
+    };
 
-  // 3. Prepare the form fields (minimal required for Formspree)
-  const formFields = {
-    email: request.requesterEmail,
-    _subject: subject,
-    message: message
-  };
 
-  // 4. Send the request
-  const response = await fetch(formspreeUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
-    },
-    body: new URLSearchParams(formFields)
-  });
+    // Ensure the formsfree_key is just the ID, not a full URL
+    let formspreeUrl = supplier.formsfree_key;
+    if (formspreeUrl.startsWith('http')) {
+      // Extract the ID if a full URL is stored
+      const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
+      formspreeUrl = match ? match[1] : formspreeUrl;
+    }
+    // Always use the correct URL format
+    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`FormsFree API error: ${response.status} - ${errorText}`);
+    console.log('Sending to FormsFree URL:', formspreeUrl);
+    console.log('Form fields:', {
+      email: supplier.email,
+      subject: emailData.subject,
+      message: emailData.message,
+      _replyto: 'noreply@tyremanagement.com',
+      _subject: emailData.subject,
+      vehicle_number: request.vehicleNumber,
+      tire_size: request.tireSizeRequired,
+      quantity: request.quantity,
+      requester_name: request.requesterName,
+      requester_email: request.requesterEmail
+    });
+
+    const response = await fetch(formspreeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: new URLSearchParams({
+        email: supplier.email,
+        subject: emailData.subject,
+        message: emailData.message,
+        _replyto: 'noreply@tyremanagement.com',
+        _subject: emailData.subject,
+        vehicle_number: request.vehicleNumber,
+        tire_size: request.tireSizeRequired,
+        quantity: request.quantity,
+        requester_name: request.requesterName,
+        requester_email: request.requesterEmail
+      })
+    });
+
+    console.log('FormsFree response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('FormsFree error response:', errorText);
+      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
+    }
+
+    const result = await response.json();
+    console.log('Order email sent successfully:', result);
+    
+    return {
+      success: true,
+      message: 'Order email sent successfully',
+      supplier: supplier.name,
+      email: supplier.email,
+      formsfree_response: result
+    };
+
+  } catch (error) {
+    console.error('Error sending order email:', error);
+    throw new Error(`Failed to send order email: ${error.message}`);
   }
-
-  const result = await response.json();
-  return {
-    success: true,
-    message: 'Order email sent successfully',
-    supplier: supplier.name,
-    email: supplier.email,
-    formsfree_response: result
-  };
 }
 
 module.exports = {
