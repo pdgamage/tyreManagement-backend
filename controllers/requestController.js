@@ -110,9 +110,40 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
+// New helper function for sending order confirmation
+async function sendOrderConfirmation(req, res, request, supplier, orderNotes) {
+  try {
+    // Send order email to supplier
+    const emailResult = await sendOrderEmail(supplier, request, orderNotes);
+
+    // Update request status to "order placed"
+    request.status = 'order placed';
+    await request.save();
+
+    console.log("Order placed successfully:", emailResult);
+
+    res.json({
+      message: "Order placed successfully",
+      supplier: {
+        id: supplier.id,
+        name: supplier.name,
+        email: supplier.email
+      },
+      emailResult: emailResult,
+      orderNotes: orderNotes
+    });
+  } catch (err) {
+    console.error("Error in sendOrderConfirmation:", err);
+    res.status(500).json({
+      message: "Failed to place order",
+      error: err.message
+    });
+  }
+}
+
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status, notes } = req.body;
+    const { status, notes, supplierId, orderNotes } = req.body;
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -139,70 +170,35 @@ exports.updateRequestStatus = async (req, res) => {
     console.log("Found request:", request.id, "current status:", request.status);
     console.log("Updating to status:", status, "with role:", req.body.role);
 
+    // If status is 'order placed', handle it as a special case
+    if (status === 'order placed') {
+      if (!supplierId) {
+        return res.status(400).json({ error: "Supplier ID is required for placing an order" });
+      }
+      const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
+      if (suppliers.length === 0) {
+        return res.status(404).json({ error: "Supplier not found" });
+      }
+      const supplier = suppliers[0];
+      return sendOrderConfirmation(req, res, request, supplier, orderNotes || '');
+    }
+
     request.status = status;
 
     // Save notes to the correct column
-    if (
-      status === "supervisor approved" ||
-      (status === "rejected" && req.body.role === "supervisor")
-    ) {
+    if (status === "supervisor approved" || (status === "rejected" && req.body.role === "supervisor")) {
       request.supervisor_notes = notes;
     }
-    if (
-      status === "technical-manager approved" ||
-      (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))
-    ) {
+    if (status === "technical-manager approved" || (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))) {
       request.technical_manager_note = notes;
     }
-    if (
-      status === "engineer approved" ||
-      status === "complete" ||
-      (status === "rejected" && req.body.role === "engineer")
-    ) {
+    if (status === "engineer approved" || status === "complete" || (status === "rejected" && req.body.role === "engineer")) {
       request.engineer_note = notes;
     }
 
-    console.log("Attempting to save request with status:", status);
-    console.log("Request data before save:", {
-      id: request.id,
-      status: request.status,
-      supervisor_notes: request.supervisor_notes,
-      technical_manager_note: request.technical_manager_note,
-      engineer_note: request.engineer_note
-    });
+    await request.save();
+    console.log("Request status updated successfully");
 
-    try {
-      await request.save();
-      console.log("Request saved successfully with Sequelize");
-    } catch (sequelizeError) {
-      console.log("Sequelize save failed, trying raw SQL:", sequelizeError.message);
-
-      // Fallback to raw SQL update
-      let updateQuery = "UPDATE requests SET status = ?";
-      let params = [status];
-
-      if (status === "supervisor approved" || (status === "rejected" && req.body.role === "supervisor")) {
-        updateQuery += ", supervisor_notes = ?";
-        params.push(notes);
-      }
-      if (status === "technical-manager approved" || (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))) {
-        updateQuery += ", technical_manager_note = ?";
-        params.push(notes);
-      }
-      if (status === "engineer approved" || status === "complete" || (status === "rejected" && req.body.role === "engineer")) {
-        updateQuery += ", engineer_note = ?";
-        params.push(notes);
-      }
-
-      updateQuery += " WHERE id = ?";
-      params.push(req.params.id);
-
-      console.log("Executing raw SQL:", updateQuery, params);
-      await pool.query(updateQuery, params);
-      console.log("Raw SQL update successful");
-    }
-
-    // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
     res.json({ message: "Request status updated successfully", request: updatedRequest });
   } catch (error) {
@@ -272,34 +268,8 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ error: "Supplier does not have a valid FormsFree key configured" });
     }
 
-    // Send order email to supplier
-    let emailResult;
-    try {
-      emailResult = await sendOrderEmail(supplier, request, orderNotes);
-    } catch (emailError) {
-      console.error("Error sending email:", emailError);
-      return res.status(500).json({
-        message: "Failed to send order email",
-        error: emailError.message
-      });
-    }
-
-    // Update request status to "order placed"
-    request.status = 'order placed';
-    await request.save();
-
-    console.log("Order placed successfully:", emailResult);
-
-    res.json({
-      message: "Order placed successfully",
-      supplier: {
-        id: supplier.id,
-        name: supplier.name,
-        email: supplier.email
-      },
-      emailResult: emailResult,
-      orderNotes: orderNotes
-    });
+    // Delegate to the new helper function
+    await sendOrderConfirmation(req, res, request, supplier, orderNotes);
 
   } catch (err) {
     console.error("Error placing order:", err);
