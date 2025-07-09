@@ -17,4 +17,7 @@ router.put('/:id', supplierController.updateSupplier);
 // Delete a supplier
 router.delete('/:id', supplierController.deleteSupplier);
 
+// Place order with selected supplier
+router.post('/place-order', supplierController.placeOrder);
+
 module.exports = router;
