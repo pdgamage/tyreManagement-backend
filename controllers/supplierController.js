@@ -1,85 +1,81 @@
-const Supplier = require('../models/Supplier');
+const { pool } = require("../config/db");
 
-// Get all suppliers
 exports.getAllSuppliers = async (req, res) => {
   try {
-    const suppliers = await Supplier.findAll();
+    const [suppliers] = await pool.query("SELECT * FROM supplier ORDER BY name");
     res.json(suppliers);
   } catch (error) {
-    console.error('Error fetching suppliers:', error);
-    res.status(500).json({ error: 'Failed to fetch suppliers' });
+    console.error("Error fetching suppliers:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Get a single supplier by ID
 exports.getSupplierById = async (req, res) => {
   try {
-    const supplier = await Supplier.findByPk(req.params.id);
-    if (!supplier) {
-      return res.status(404).json({ error: 'Supplier not found' });
+    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [req.params.id]);
+    if (suppliers.length === 0) {
+      return res.status(404).json({ error: "Supplier not found" });
     }
-    res.json(supplier);
+    res.json(suppliers[0]);
   } catch (error) {
-    console.error('Error fetching supplier:', error);
-    res.status(500).json({ error: 'Failed to fetch supplier' });
+    console.error("Error fetching supplier:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Create a new supplier
 exports.createSupplier = async (req, res) => {
   try {
     const { name, email, phone, formsfree_key } = req.body;
+    
+    if (!name || !email || !formsfree_key) {
+      return res.status(400).json({ error: "Name, email, and formsfree_key are required" });
+    }
 
-    const supplier = await Supplier.create({
-      name,
-      email,
-      phone,
-      formsfree_key
-    });
+    const [result] = await pool.query(
+      "INSERT INTO supplier (name, email, phone, formsfree_key) VALUES (?, ?, ?, ?)",
+      [name, email, phone, formsfree_key]
+    );
 
-    res.status(201).json(supplier);
+    const [newSupplier] = await pool.query("SELECT * FROM supplier WHERE id = ?", [result.insertId]);
+    res.status(201).json(newSupplier[0]);
   } catch (error) {
-    console.error('Error creating supplier:', error);
-    res.status(500).json({ error: 'Failed to create supplier' });
+    console.error("Error creating supplier:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Update a supplier
 exports.updateSupplier = async (req, res) => {
   try {
     const { name, email, phone, formsfree_key } = req.body;
+    
+    const [result] = await pool.query(
+      "UPDATE supplier SET name = ?, email = ?, phone = ?, formsfree_key = ? WHERE id = ?",
+      [name, email, phone, formsfree_key, req.params.id]
+    );
 
-    const supplier = await Supplier.findByPk(req.params.id);
-    if (!supplier) {
-      return res.status(404).json({ error: 'Supplier not found' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Supplier not found" });
     }
 
-    await supplier.update({
-      name,
-      email,
-      phone,
-      formsfree_key
-    });
-
-    res.json(supplier);
+    const [updatedSupplier] = await pool.query("SELECT * FROM supplier WHERE id = ?", [req.params.id]);
+    res.json(updatedSupplier[0]);
   } catch (error) {
-    console.error('Error updating supplier:', error);
-    res.status(500).json({ error: 'Failed to update supplier' });
+    console.error("Error updating supplier:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Delete a supplier
 exports.deleteSupplier = async (req, res) => {
   try {
-    const supplier = await Supplier.findByPk(req.params.id);
-    if (!supplier) {
-      return res.status(404).json({ error: 'Supplier not found' });
+    const [result] = await pool.query("DELETE FROM supplier WHERE id = ?", [req.params.id]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Supplier not found" });
     }
 
-    await supplier.destroy();
-    res.json({ message: 'Supplier deleted successfully' });
+    res.json({ message: "Supplier deleted successfully" });
   } catch (error) {
-    console.error('Error deleting supplier:', error);
-    res.status(500).json({ error: 'Failed to delete supplier' });
+    console.error("Error deleting supplier:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
