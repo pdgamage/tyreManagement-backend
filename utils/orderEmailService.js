@@ -124,7 +124,7 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     // The supplier's email is set in the Formspree dashboard for each form
     console.log('Form fields:', {
       email: request.requesterEmail,
-      subject: emailData.subject,
+      _subject: emailData.subject,
       message: emailData.message
     });
 
@@ -136,7 +136,7 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
       },
       body: new URLSearchParams({
         email: request.requesterEmail,
-        subject: emailData.subject,
+        _subject: emailData.subject,
         message: emailData.message
       })
     });
