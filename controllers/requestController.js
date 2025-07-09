@@ -261,29 +261,16 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Get supplier details
-    console.log(`Fetching supplier with ID: ${supplierId}`);
-
-    // Try different possible column names for the Formspree key
-    let supplier = null;
-    try {
-      const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
-      if (suppliers.length === 0) {
-        console.log(`Supplier with ID ${supplierId} not found`);
-        return res.status(404).json({ error: "Supplier not found" });
-      }
-      supplier = suppliers[0];
-      console.log('Found supplier:', JSON.stringify(supplier, null, 2));
-    } catch (dbError) {
-      console.error('Database error fetching supplier:', dbError);
-      return res.status(500).json({ error: "Database error fetching supplier" });
+    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
+    if (suppliers.length === 0) {
+      return res.status(404).json({ error: "Supplier not found" });
     }
+    const supplier = suppliers[0];
 
-    // Validate supplier has Formspree key
+    // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
-      console.log('Supplier does not have formsfree_key:', supplier);
-      return res.status(400).json({ error: "Supplier does not have a valid Formspree key configured" });
+      return res.status(400).json({ error: "Supplier does not have a valid FormsFree key configured" });
     }
-    console.log(`Supplier Formspree key: ${supplier.formsfree_key}`);
 
     // Send order email to supplier
     let emailResult;
@@ -363,44 +350,6 @@ exports.placeOrder = async (req, res) => {
         error: err.message
       });
     }
-  }
-};
-
-// Test endpoint to debug email functionality
-exports.testEmail = async (req, res) => {
-  try {
-    const { supplierId, requestId } = req.body;
-
-    console.log(`Testing email for supplier ${supplierId} and request ${requestId}`);
-
-    // Get supplier details
-    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
-    if (suppliers.length === 0) {
-      return res.status(404).json({ error: "Supplier not found" });
-    }
-    const supplier = suppliers[0];
-
-    // Get request details
-    const request = await Request.findByPk(requestId);
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
-
-    // Test email sending
-    const emailResult = await sendOrderEmail(supplier, request, "Test order notes");
-
-    res.json({
-      message: "Test email sent successfully",
-      supplier: supplier,
-      emailResult: emailResult
-    });
-
-  } catch (error) {
-    console.error("Error in test email:", error);
-    res.status(500).json({
-      message: "Test email failed",
-      error: error.message
-    });
   }
 };
 

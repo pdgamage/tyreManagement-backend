@@ -1,12 +1,9 @@
-// Using isomorphic-fetch for compatibility
-require('isomorphic-fetch');
+// Using built-in fetch API (Node.js 18+)
 
 async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
-    console.log('Supplier object:', JSON.stringify(supplier, null, 2));
-    console.log('FormsFree key from supplier:', supplier.formsfree_key);
-
+    
     // Prepare the email data
     const emailData = {
       // Supplier information
@@ -112,61 +109,29 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
     };
 
 
-    // Validate Formspree key exists
-    if (!supplier.formsfree_key) {
-      throw new Error('Supplier does not have a Formspree key configured');
-    }
-
-    // Handle both full URLs and form IDs
+    // Ensure the formsfree_key is just the ID, not a full URL
     let formspreeUrl = supplier.formsfree_key;
-    console.log('Original Formspree key:', formspreeUrl);
-
-    if (formspreeUrl.startsWith('https://formspree.io/f/')) {
-      // Already a full URL, use as is
-      console.log('Using full Formspree URL as provided');
-    } else if (formspreeUrl.startsWith('http')) {
-      // Extract the ID if a different URL format is stored
+    if (formspreeUrl.startsWith('http')) {
+      // Extract the ID if a full URL is stored
       const match = formspreeUrl.match(/\/f\/([a-zA-Z0-9]+)/);
-      if (match) {
-        formspreeUrl = `https://formspree.io/f/${match[1]}`;
-        console.log('Extracted and rebuilt Formspree URL:', formspreeUrl);
-      } else {
-        throw new Error(`Invalid Formspree URL format: ${formspreeUrl}`);
-      }
-    } else {
-      // Assume it's just the form ID
-      if (!/^[a-zA-Z0-9]+$/.test(formspreeUrl)) {
-        throw new Error(`Invalid Formspree key format: ${formspreeUrl}. Expected alphanumeric string or full URL.`);
-      }
-      formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
-      console.log('Built Formspree URL from ID:', formspreeUrl);
+      formspreeUrl = match ? match[1] : formspreeUrl;
     }
+    // Always use the correct URL format
+    formspreeUrl = `https://formspree.io/f/${formspreeUrl}`;
 
-    console.log('Final Formspree URL:', formspreeUrl);
-    const formData = {
-      // Formspree will send the email to the form owner (supplier)
-      // The 'email' field is the sender's email for reply purposes
-      email: request.requesterEmail,
-      name: request.requesterName,
+    console.log('Sending to FormsFree URL:', formspreeUrl);
+    console.log('Form fields:', {
+      email: supplier.email,
       subject: emailData.subject,
       message: emailData.message,
-      _replyto: request.requesterEmail,
+      _replyto: 'noreply@tyremanagement.com',
       _subject: emailData.subject,
-
-      // Additional order details
-      supplier_name: supplier.name,
-      supplier_email: supplier.email,
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
       requester_name: request.requesterName,
-      requester_email: request.requesterEmail,
-      requester_phone: request.requesterPhone,
-      user_section: request.userSection,
-      cost_center: request.costCenter
-    };
-
-    console.log('Form fields to be sent:', JSON.stringify(formData, null, 2));
+      requester_email: request.requesterEmail
+    });
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
@@ -174,29 +139,26 @@ Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams(formData)
+      body: new URLSearchParams({
+        email: supplier.email,
+        subject: emailData.subject,
+        message: emailData.message,
+        _replyto: 'noreply@tyremanagement.com',
+        _subject: emailData.subject,
+        vehicle_number: request.vehicleNumber,
+        tire_size: request.tireSizeRequired,
+        quantity: request.quantity,
+        requester_name: request.requesterName,
+        requester_email: request.requesterEmail
+      })
     });
 
-    console.log('Formspree response status:', response.status);
-    console.log('Formspree response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('FormsFree response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Formspree error response:', errorText);
-
-      // Provide more specific error messages based on status code
-      let errorMessage = `Formspree API error: ${response.status}`;
-      if (response.status === 404) {
-        errorMessage += ' - Invalid Formspree form ID. Please check the Formspree key in supplier settings.';
-      } else if (response.status === 403) {
-        errorMessage += ' - Access denied. Please verify the Formspree form is active and accessible.';
-      } else if (response.status === 422) {
-        errorMessage += ' - Invalid form data. Please check the email format and required fields.';
-      } else {
-        errorMessage += ' - Please check the Formspree key format in supplier settings.';
-      }
-
-      throw new Error(errorMessage);
+      console.error('FormsFree error response:', errorText);
+      throw new Error(`FormsFree API error: ${response.status} - Please check the FormsFree key format in supplier settings.`);
     }
 
     const result = await response.json();

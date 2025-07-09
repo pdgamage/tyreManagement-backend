@@ -38,9 +38,6 @@ router.get("/user/:id", requestController.getRequestsByUser);
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
-// Test email functionality
-router.post("/test-email", requestController.testEmail);
-
 // Delete a request
 router.delete("/requests/:id", requestController.deleteRequest);
 
