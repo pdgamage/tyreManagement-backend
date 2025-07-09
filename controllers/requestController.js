@@ -1,6 +1,8 @@
 const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
 const { pool } = require("../config/db");
+const Supplier = require("../models/Supplier");
+const { sendOrderEmail } = require("../utils/orderEmailService");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -201,5 +203,58 @@ exports.deleteRequest = async (req, res) => {
   } catch (error) {
     console.error("Error deleting request:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Place order for an approved request
+exports.placeOrder = async (req, res) => {
+  try {
+    const { supplierId, orderNotes } = req.body;
+    const requestId = req.params.id;
+
+    // Find the request
+    const request = await Request.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if request is approved
+    if (request.status !== "approved") {
+      return res.status(400).json({ error: "Request must be approved before placing order" });
+    }
+
+    // Check if order already placed
+    if (request.order_status === "placed") {
+      return res.status(400).json({ error: "Order has already been placed for this request" });
+    }
+
+    // Find the supplier
+    const supplier = await Supplier.findByPk(supplierId);
+    if (!supplier) {
+      return res.status(404).json({ error: "Supplier not found" });
+    }
+
+    // Send order email
+    await sendOrderEmail(request, supplier, orderNotes);
+
+    // Update request order status
+    await request.update({
+      order_status: "placed",
+      supplier_id: supplierId,
+      order_notes: orderNotes,
+      order_placed_at: new Date()
+    });
+
+    res.json({
+      message: "Order placed successfully",
+      request: request,
+      supplier: supplier
+    });
+  } catch (error) {
+    console.error("Error placing order:", error);
+    res.status(500).json({
+      error: "Failed to place order",
+      details: error.message
+    });
   }
 };

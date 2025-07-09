@@ -53,6 +53,27 @@ const Request = sequelize.define(
         key: "id",
       },
     },
+    // Order-related fields
+    order_status: {
+      type: DataTypes.ENUM("not_placed", "placed"),
+      defaultValue: "not_placed",
+    },
+    supplier_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "supplier",
+        key: "id",
+      },
+    },
+    order_notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    order_placed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "requests",
