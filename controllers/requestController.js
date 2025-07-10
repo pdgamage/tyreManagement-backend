@@ -423,7 +423,7 @@ exports.placeOrder = async (req, res) => {
 exports.deleteRequest = async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await RequestModel.destroy({ where: { id } });
+    const result = await Request.destroy({ where: { id } });
     if (result === 0) {
       return res.status(404).json({ message: "Request not found" });
     }
