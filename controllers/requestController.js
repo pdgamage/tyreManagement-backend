@@ -111,7 +111,7 @@ exports.getRequestById = async (req, res) => {
 
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status, notes } = req.body;
+    const { status, notes, role, userId } = req.body;
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -138,15 +138,26 @@ exports.updateRequestStatus = async (req, res) => {
     // Save notes to the correct column
     if (
       status === "supervisor approved" ||
-      (status === "rejected" && req.body.role === "supervisor")
+      (status === "rejected" && role === "supervisor")
     ) {
       request.supervisor_notes = notes;
     }
     if (
       status === "technical-manager approved" ||
-      (status === "rejected" && req.body.role === "technical-manager")
+      (status === "rejected" && role === "technical-manager")
     ) {
       request.technical_manager_note = notes;
+      // Store the technical manager ID who made the decision
+      if (userId) {
+        request.technical_manager_id = userId;
+      }
+    }
+    if (
+      status === "engineer approved" ||
+      status === "complete" ||
+      (status === "rejected" && role === "engineer")
+    ) {
+      request.engineer_note = notes;
     }
     await request.save();
     res.json({ message: "Request status updated successfully", request });

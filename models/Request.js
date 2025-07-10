@@ -52,6 +52,14 @@ const RequestModel = sequelize.define(
         key: "id",
       },
     },
+    technical_manager_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // optional since not all requests go through technical manager
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "requests",
