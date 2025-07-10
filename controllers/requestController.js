@@ -242,13 +242,13 @@ exports.updateRequestStatus = async (req, res) => {
     // Broadcast the update to all connected clients via WebSocket
     websocketService.broadcastRequestUpdate(updatedRequest, "updated");
 
-    // Also broadcast via SSE (more reliable for Railway)
-    sseRoutes.broadcastUpdate({
-      type: "REQUEST_UPDATE",
-      action: "updated",
-      request: updatedRequest,
-      timestamp: new Date().toISOString(),
-    });
+    // SSE disabled due to Railway connection issues
+    // sseRoutes.broadcastUpdate({
+    //   type: "REQUEST_UPDATE",
+    //   action: "updated",
+    //   request: updatedRequest,
+    //   timestamp: new Date().toISOString(),
+    // });
 
     res.json({
       message: "Request status updated successfully",
