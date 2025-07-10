@@ -12,20 +12,39 @@ class WebSocketService {
         origin: [
           "http://localhost:5173",
           "https://tyremanagement-frontend.vercel.app",
+          "https://tyremanagement-frontend-production.up.railway.app",
           process.env.FRONTEND_URL,
+          "*", // Allow all origins for testing
         ].filter(Boolean),
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "OPTIONS"],
         credentials: true,
       },
-      transports: ["websocket", "polling"],
-      pingTimeout: 60000,
-      pingInterval: 25000,
-      upgradeTimeout: 30000,
+      transports: ["polling", "websocket"], // Try polling first, then upgrade to websocket
+      pingTimeout: 30000,
+      pingInterval: 10000,
+      upgradeTimeout: 15000,
       allowEIO3: true,
+      connectTimeout: 45000,
+      path: "/socket.io/", // Default path
     });
 
     this.io.on("connection", (socket) => {
-      console.log("User connected:", socket.id);
+      console.log("🟢 User connected:", socket.id);
+
+      // Send immediate ping to test connection
+      socket.emit("ping", {
+        message: "Connected to WebSocket server",
+        timestamp: new Date().toISOString(),
+      });
+
+      // Setup ping interval to keep connection alive
+      const pingInterval = setInterval(() => {
+        if (socket.connected) {
+          socket.emit("ping", { timestamp: new Date().toISOString() });
+        } else {
+          clearInterval(pingInterval);
+        }
+      }, 25000);
 
       // Handle user authentication/identification
       socket.on("authenticate", (userData) => {
@@ -33,17 +52,34 @@ class WebSocketService {
           this.connectedUsers.set(socket.id, userData);
           socket.join(`user_${userData.id}`); // Join user-specific room
           socket.join(`role_${userData.role}`); // Join role-specific room
-          console.log(`User ${userData.id} (${userData.role}) authenticated`);
+          console.log(
+            `🔑 User ${userData.id} (${userData.role}) authenticated`
+          );
+
+          // Send confirmation back to client
+          socket.emit("authenticated", {
+            success: true,
+            message: `Authenticated as ${userData.role}`,
+            userId: userData.id,
+          });
         }
       });
 
+      // Handle ping response
+      socket.on("pong", (data) => {
+        console.log(`📡 Received pong from ${socket.id}:`, data);
+      });
+
       // Handle disconnection
-      socket.on("disconnect", () => {
+      socket.on("disconnect", (reason) => {
         const userData = this.connectedUsers.get(socket.id);
         if (userData) {
-          console.log(`User ${userData.id} disconnected`);
+          console.log(`🔴 User ${userData.id} disconnected: ${reason}`);
           this.connectedUsers.delete(socket.id);
+        } else {
+          console.log(`🔴 Anonymous user disconnected: ${reason}`);
         }
+        clearInterval(pingInterval);
       });
     });
 
