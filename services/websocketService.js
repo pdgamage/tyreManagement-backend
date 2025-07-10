@@ -9,23 +9,14 @@ class WebSocketService {
   initialize(server) {
     this.io = new Server(server, {
       cors: {
-        origin: [
-          "http://localhost:5173",
-          "https://tyremanagement-frontend.vercel.app",
-          "https://tyremanagement-frontend-production.up.railway.app",
-          process.env.FRONTEND_URL,
-          "*", // Allow all origins for testing
-        ].filter(Boolean),
-        methods: ["GET", "POST", "OPTIONS"],
-        credentials: true,
+        origin: "*", // Allow all origins for Railway
+        methods: ["GET", "POST"],
+        credentials: false, // Disable credentials for Railway
       },
-      transports: ["polling", "websocket"], // Try polling first, then upgrade to websocket
-      pingTimeout: 30000,
-      pingInterval: 10000,
-      upgradeTimeout: 15000,
+      transports: ["polling"], // Use only polling for Railway reliability
+      pingTimeout: 60000,
+      pingInterval: 25000,
       allowEIO3: true,
-      connectTimeout: 45000,
-      path: "/socket.io/", // Default path
     });
 
     this.io.on("connection", (socket) => {
