@@ -52,7 +52,10 @@ class WebSocketService {
 
   // Broadcast request updates to all relevant users
   broadcastRequestUpdate(request, action = "updated") {
-    if (!this.io) return;
+    if (!this.io) {
+      console.log("❌ WebSocket not initialized, cannot broadcast");
+      return;
+    }
 
     const updateData = {
       type: "REQUEST_UPDATE",
@@ -60,6 +63,10 @@ class WebSocketService {
       request,
       timestamp: new Date().toISOString(),
     };
+
+    console.log(
+      `🔥 Broadcasting ${action} for request ${request.id} to ${this.connectedUsers.size} connected users`
+    );
 
     // Broadcast to all users (they'll filter on frontend based on their role)
     this.io.emit("requestUpdate", updateData);
@@ -70,7 +77,9 @@ class WebSocketService {
     this.io.to("role_technical-manager").emit("requestUpdate", updateData);
     this.io.to("role_engineer").emit("requestUpdate", updateData);
 
-    console.log(`Broadcasted ${action} for request ${request.id}`);
+    console.log(
+      `✅ Broadcasted ${action} for request ${request.id} - Status: ${request.status}`
+    );
   }
 
   // Broadcast to specific user

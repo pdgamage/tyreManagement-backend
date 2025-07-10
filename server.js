@@ -4,7 +4,7 @@ const { sequelize, pool } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
 const requestRoutes = require("./routes/requestRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
-const sseRoutes = require("./routes/sseRoutes");
+// const sseRoutes = require("./routes/sseRoutes"); // Disabled
 const websocketService = require("./services/websocketService");
 const http = require("http");
 
@@ -32,7 +32,7 @@ async function testDbConnection() {
 // Middleware for routes
 app.use("/api", requestRoutes);
 app.use("/api", vehicleRoutes);
-app.use("/api/sse", sseRoutes);
+// app.use("/api/sse", sseRoutes); // Disabled
 
 // Create HTTP server
 const server = http.createServer(app);
