@@ -136,7 +136,12 @@ exports.updateRequestStatus = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    console.log("Found request:", request.id, "current status:", request.status);
+    console.log(
+      "Found request:",
+      request.id,
+      "current status:",
+      request.status
+    );
     console.log("Updating to status:", status, "with role:", req.body.role);
 
     request.status = status;
@@ -150,11 +155,7 @@ exports.updateRequestStatus = async (req, res) => {
     }
     if (
       status === "technical-manager approved" ||
-<<<<<<< HEAD
       (status === "rejected" && role === "technical-manager")
-=======
-      (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))
->>>>>>> bbde72211d606aee050037947a6b497f65b26038
     ) {
       request.technical_manager_note = notes;
       // Store the technical manager ID who made the decision
@@ -169,13 +170,6 @@ exports.updateRequestStatus = async (req, res) => {
     ) {
       request.engineer_note = notes;
     }
-    if (
-      status === "engineer approved" ||
-      status === "complete" ||
-      (status === "rejected" && req.body.role === "engineer")
-    ) {
-      request.engineer_note = notes;
-    }
 
     console.log("Attempting to save request with status:", status);
     console.log("Request data before save:", {
@@ -183,28 +177,43 @@ exports.updateRequestStatus = async (req, res) => {
       status: request.status,
       supervisor_notes: request.supervisor_notes,
       technical_manager_note: request.technical_manager_note,
-      engineer_note: request.engineer_note
+      engineer_note: request.engineer_note,
     });
 
     try {
       await request.save();
       console.log("Request saved successfully with Sequelize");
     } catch (sequelizeError) {
-      console.log("Sequelize save failed, trying raw SQL:", sequelizeError.message);
+      console.log(
+        "Sequelize save failed, trying raw SQL:",
+        sequelizeError.message
+      );
 
       // Fallback to raw SQL update
       let updateQuery = "UPDATE requests SET status = ?";
       let params = [status];
 
-      if (status === "supervisor approved" || (status === "rejected" && req.body.role === "supervisor")) {
+      if (
+        status === "supervisor approved" ||
+        (status === "rejected" && req.body.role === "supervisor")
+      ) {
         updateQuery += ", supervisor_notes = ?";
         params.push(notes);
       }
-      if (status === "technical-manager approved" || (status === "rejected" && (req.body.role === "technical-manager" || req.body.role === "technical - manager"))) {
+      if (
+        status === "technical-manager approved" ||
+        (status === "rejected" &&
+          (req.body.role === "technical-manager" ||
+            req.body.role === "technical - manager"))
+      ) {
         updateQuery += ", technical_manager_note = ?";
         params.push(notes);
       }
-      if (status === "engineer approved" || status === "complete" || (status === "rejected" && req.body.role === "engineer")) {
+      if (
+        status === "engineer approved" ||
+        status === "complete" ||
+        (status === "rejected" && req.body.role === "engineer")
+      ) {
         updateQuery += ", engineer_note = ?";
         params.push(notes);
       }
@@ -219,18 +228,21 @@ exports.updateRequestStatus = async (req, res) => {
 
     // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
-    res.json({ message: "Request status updated successfully", request: updatedRequest });
+    res.json({
+      message: "Request status updated successfully",
+      request: updatedRequest,
+    });
   } catch (error) {
     console.error("Error updating request status:", error);
     console.error("Error details:", {
       message: error.message,
       stack: error.stack,
-      sql: error.sql
+      sql: error.sql,
     });
     res.status(500).json({
       error: "Internal server error",
       details: error.message,
-      sql: error.sql
+      sql: error.sql,
     });
   }
 };
@@ -268,15 +280,18 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Check if request is complete (ready for order)
-    if (request.status !== 'complete') {
+    if (request.status !== "complete") {
       return res.status(400).json({
         error: "Request must be complete before placing order",
-        currentStatus: request.status
+        currentStatus: request.status,
       });
     }
 
     // Get supplier details
-    const [suppliers] = await pool.query("SELECT * FROM supplier WHERE id = ?", [supplierId]);
+    const [suppliers] = await pool.query(
+      "SELECT * FROM supplier WHERE id = ?",
+      [supplierId]
+    );
     if (suppliers.length === 0) {
       return res.status(404).json({ error: "Supplier not found" });
     }
@@ -284,7 +299,9 @@ exports.placeOrder = async (req, res) => {
 
     // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
-      return res.status(400).json({ error: "Supplier does not have a valid FormsFree key configured" });
+      return res.status(400).json({
+        error: "Supplier does not have a valid FormsFree key configured",
+      });
     }
 
     // Send order email to supplier
@@ -301,7 +318,7 @@ exports.placeOrder = async (req, res) => {
       return res.status(500).json({
         message: "Failed to send order email",
         error: emailError.message,
-        details: emailError.response ? emailError.response.data : undefined
+        details: emailError.response ? emailError.response.data : undefined,
       });
     }
 
@@ -311,26 +328,29 @@ exports.placeOrder = async (req, res) => {
       // First try with all columns
       await pool.query(
         "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
-        ['order placed', id]
+        ["order placed", id]
       );
-      console.log('Updated request with all columns');
+      console.log("Updated request with all columns");
     } catch (error) {
-      console.log('Full update failed, trying status only:', error.message);
+      console.log("Full update failed, trying status only:", error.message);
       try {
         // If that fails, try just updating status
-        await pool.query(
-          "UPDATE requests SET status = ? WHERE id = ?",
-          ['order placed', id]
-        );
-        console.log('Updated request status only');
+        await pool.query("UPDATE requests SET status = ? WHERE id = ?", [
+          "order placed",
+          id,
+        ]);
+        console.log("Updated request status only");
       } catch (statusError) {
-        console.log('Status update also failed, trying with enum check:', statusError.message);
+        console.log(
+          "Status update also failed, trying with enum check:",
+          statusError.message
+        );
         // If status update fails, it might be an enum issue, try with a valid enum value
         await pool.query(
           "UPDATE requests SET status = ? WHERE id = ?",
-          ['complete', id]  // Use 'complete' as fallback since 'order placed' might not be in enum
+          ["complete", id] // Use 'complete' as fallback since 'order placed' might not be in enum
         );
-        console.log('Updated request status to complete as fallback');
+        console.log("Updated request status to complete as fallback");
       }
     }
 
@@ -341,17 +361,20 @@ exports.placeOrder = async (req, res) => {
       supplier: {
         id: supplier.id,
         name: supplier.name,
-        email: supplier.email
+        email: supplier.email,
       },
       emailResult: emailResult,
-      orderNotes: orderNotes
+      orderNotes: orderNotes,
     });
-
   } catch (err) {
     console.error("Error placing order:", err);
 
     // Check if this is just a database error but email was sent
-    if (err.message && err.message.includes('Data truncated') && typeof emailResult !== 'undefined') {
+    if (
+      err.message &&
+      err.message.includes("Data truncated") &&
+      typeof emailResult !== "undefined"
+    ) {
       // Email was sent successfully, return success despite database error
       console.log("Email sent successfully despite database error");
       res.json({
@@ -359,16 +382,17 @@ exports.placeOrder = async (req, res) => {
         supplier: {
           id: supplier.id,
           name: supplier.name,
-          email: supplier.email
+          email: supplier.email,
         },
         emailResult: emailResult,
         orderNotes: orderNotes,
-        warning: "Database update had issues but order email was sent successfully"
+        warning:
+          "Database update had issues but order email was sent successfully",
       });
     } else {
       res.status(500).json({
         message: "Error placing order",
-        error: err.message
+        error: err.message,
       });
     }
   }
