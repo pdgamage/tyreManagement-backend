@@ -61,6 +61,22 @@ const Request = sequelize.define(
         key: "id",
       },
     },
+    supervisor_decision_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // tracks which supervisor approved/rejected
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    engineer_decision_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // tracks which engineer approved/rejected
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "requests",

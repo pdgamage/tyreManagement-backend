@@ -152,6 +152,10 @@ exports.updateRequestStatus = async (req, res) => {
       (status === "rejected" && role === "supervisor")
     ) {
       request.supervisor_notes = notes;
+      // Store the supervisor ID who made the decision
+      if (userId) {
+        request.supervisor_decision_by = userId;
+      }
     }
     if (
       status === "technical-manager approved" ||
@@ -169,6 +173,10 @@ exports.updateRequestStatus = async (req, res) => {
       (status === "rejected" && role === "engineer")
     ) {
       request.engineer_note = notes;
+      // Store the engineer ID who made the decision
+      if (userId) {
+        request.engineer_decision_by = userId;
+      }
     }
 
     console.log("Attempting to save request with status:", status);
