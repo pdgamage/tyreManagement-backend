@@ -14,3 +14,16 @@ ALTER TABLE requests
   ADD COLUMN engineer_note TEXT,
   ADD COLUMN supervisorId INTEGER NOT NULL,
   ADD CONSTRAINT fk_supervisor FOREIGN KEY (supervisorId) REFERENCES users(id);
+
+
+
+
+  -- add colomn
+
+ALTER TABLE requests ADD COLUMN supervisor_decision_by INT NULL;
+ALTER TABLE requests ADD COLUMN engineer_decision_by INT NULL;
+ALTER TABLE requests ADD FOREIGN KEY (supervisor_decision_by) REFERENCES users(id);
+ALTER TABLE requests ADD FOREIGN KEY (engineer_decision_by) REFERENCES users(id);
+
+ALTER TABLE requests ADD COLUMN technical_manager_id INT NULL;
+ALTER TABLE requests ADD FOREIGN KEY (technical_manager_id) REFERENCES users(id);
