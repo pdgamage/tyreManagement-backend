@@ -5,7 +5,7 @@ require("./models"); // Loads all models and associations
 const requestRoutes = require("./routes/requestRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
 // const sseRoutes = require("./routes/sseRoutes"); // Disabled
-const websocketService = require("./services/websocketService");
+// const websocketService = require("./services/websocketService"); // Disabled
 const http = require("http");
 
 const port = process.env.PORT || 5000;
@@ -37,8 +37,8 @@ app.use("/api", vehicleRoutes);
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize WebSocket
-websocketService.initialize(server);
+// WebSocket disabled for Railway compatibility
+// websocketService.initialize(server);
 
 // Start server
 server.listen(port, async () => {

@@ -2,7 +2,7 @@ const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
-const websocketService = require("../services/websocketService");
+// const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
 
 exports.createRequest = async (req, res) => {
@@ -239,8 +239,8 @@ exports.updateRequestStatus = async (req, res) => {
     // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
 
-    // Broadcast the update to all connected clients via WebSocket
-    websocketService.broadcastRequestUpdate(updatedRequest, "updated");
+    // Real-time updates disabled - using polling only
+    // websocketService.broadcastRequestUpdate(updatedRequest, "updated");
 
     // SSE disabled due to Railway connection issues
     // sseRoutes.broadcastUpdate({
