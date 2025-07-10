@@ -168,6 +168,10 @@ exports.updateRequestStatus = async (req, res) => {
       if (userId) {
         request.technical_manager_id = userId;
       }
+      // If technical manager rejects, clear supervisor decision tracking
+      if (status === "rejected" && role === "technical-manager") {
+        request.supervisor_decision_by = null;
+      }
     }
     if (
       status === "engineer approved" ||
@@ -178,6 +182,11 @@ exports.updateRequestStatus = async (req, res) => {
       // Store the engineer ID who made the decision
       if (userId) {
         request.engineer_decision_by = userId;
+      }
+      // If engineer rejects, clear previous decision tracking
+      if (status === "rejected" && role === "engineer") {
+        request.supervisor_decision_by = null;
+        request.technical_manager_id = null;
       }
     }
 
