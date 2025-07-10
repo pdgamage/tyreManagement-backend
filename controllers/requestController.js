@@ -3,6 +3,7 @@ const { Request } = require("../models");
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
 const websocketService = require("../services/websocketService");
+const sseRoutes = require("../routes/sseRoutes");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -238,8 +239,16 @@ exports.updateRequestStatus = async (req, res) => {
     // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
 
-    // Broadcast the update to all connected clients
+    // Broadcast the update to all connected clients via WebSocket
     websocketService.broadcastRequestUpdate(updatedRequest, "updated");
+
+    // Also broadcast via SSE (more reliable for Railway)
+    sseRoutes.broadcastUpdate({
+      type: "REQUEST_UPDATE",
+      action: "updated",
+      request: updatedRequest,
+      timestamp: new Date().toISOString(),
+    });
 
     res.json({
       message: "Request status updated successfully",
