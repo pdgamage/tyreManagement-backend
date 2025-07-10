@@ -4,6 +4,8 @@ const { sequelize, pool } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
 const requestRoutes = require("./routes/requestRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
+const websocketService = require("./services/websocketService");
+const http = require("http");
 
 const port = process.env.PORT || 5000;
 
@@ -30,9 +32,16 @@ async function testDbConnection() {
 app.use("/api", requestRoutes);
 app.use("/api", vehicleRoutes);
 
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize WebSocket
+websocketService.initialize(server);
+
 // Start server
-app.listen(port, async () => {
+server.listen(port, async () => {
   console.log(`Server running on http://localhost:${port}`);
+  console.log(`WebSocket server initialized`);
   await testDbConnection();
 });
 

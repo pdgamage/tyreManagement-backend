@@ -2,6 +2,7 @@ const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
+const websocketService = require("../services/websocketService");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -236,6 +237,10 @@ exports.updateRequestStatus = async (req, res) => {
 
     // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
+
+    // Broadcast the update to all connected clients
+    websocketService.broadcastRequestUpdate(updatedRequest, "updated");
+
     res.json({
       message: "Request status updated successfully",
       request: updatedRequest,
