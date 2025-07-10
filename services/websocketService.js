@@ -20,8 +20,6 @@ class WebSocketService {
     });
 
     this.io.on("connection", (socket) => {
-      console.log("🟢 User connected:", socket.id);
-
       // Send immediate ping to test connection
       socket.emit("ping", {
         message: "Connected to WebSocket server",
@@ -43,9 +41,6 @@ class WebSocketService {
           this.connectedUsers.set(socket.id, userData);
           socket.join(`user_${userData.id}`); // Join user-specific room
           socket.join(`role_${userData.role}`); // Join role-specific room
-          console.log(
-            `🔑 User ${userData.id} (${userData.role}) authenticated`
-          );
 
           // Send confirmation back to client
           socket.emit("authenticated", {
@@ -58,17 +53,14 @@ class WebSocketService {
 
       // Handle ping response
       socket.on("pong", (data) => {
-        console.log(`📡 Received pong from ${socket.id}:`, data);
+        // Silent ping/pong for connection health
       });
 
       // Handle disconnection
       socket.on("disconnect", (reason) => {
         const userData = this.connectedUsers.get(socket.id);
         if (userData) {
-          console.log(`🔴 User ${userData.id} disconnected: ${reason}`);
           this.connectedUsers.delete(socket.id);
-        } else {
-          console.log(`🔴 Anonymous user disconnected: ${reason}`);
         }
         clearInterval(pingInterval);
       });
@@ -80,7 +72,6 @@ class WebSocketService {
   // Broadcast request updates to all relevant users
   broadcastRequestUpdate(request, action = "updated") {
     if (!this.io) {
-      console.log("❌ WebSocket not initialized, cannot broadcast");
       return;
     }
 
@@ -91,10 +82,6 @@ class WebSocketService {
       timestamp: new Date().toISOString(),
     };
 
-    console.log(
-      `🔥 Broadcasting ${action} for request ${request.id} to ${this.connectedUsers.size} connected users`
-    );
-
     // Broadcast to all users (they'll filter on frontend based on their role)
     this.io.emit("requestUpdate", updateData);
 
@@ -103,10 +90,6 @@ class WebSocketService {
     this.io.to("role_supervisor").emit("requestUpdate", updateData);
     this.io.to("role_technical-manager").emit("requestUpdate", updateData);
     this.io.to("role_engineer").emit("requestUpdate", updateData);
-
-    console.log(
-      `✅ Broadcasted ${action} for request ${request.id} - Status: ${request.status}`
-    );
   }
 
   // Broadcast to specific user

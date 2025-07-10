@@ -239,13 +239,6 @@ exports.updateRequestStatus = async (req, res) => {
     // Fetch the updated request
     const updatedRequest = await Request.findByPk(req.params.id);
 
-    console.log("🚀 Broadcasting request update:", {
-      id: updatedRequest.id,
-      status: updatedRequest.status,
-      role: role,
-      userId: userId,
-    });
-
     // Broadcast the update to all connected clients via WebSocket
     websocketService.broadcastRequestUpdate(updatedRequest, "updated");
 
