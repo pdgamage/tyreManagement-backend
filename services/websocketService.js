@@ -1,4 +1,4 @@
-const { Server } = require('socket.io');
+const { Server } = require("socket.io");
 
 class WebSocketService {
   constructor() {
@@ -9,17 +9,26 @@ class WebSocketService {
   initialize(server) {
     this.io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: [
+          "http://localhost:5173",
+          "https://tyremanagement-frontend.vercel.app",
+          process.env.FRONTEND_URL,
+        ].filter(Boolean),
         methods: ["GET", "POST"],
-        credentials: true
-      }
+        credentials: true,
+      },
+      transports: ["websocket", "polling"],
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      upgradeTimeout: 30000,
+      allowEIO3: true,
     });
 
-    this.io.on('connection', (socket) => {
-      console.log('User connected:', socket.id);
+    this.io.on("connection", (socket) => {
+      console.log("User connected:", socket.id);
 
       // Handle user authentication/identification
-      socket.on('authenticate', (userData) => {
+      socket.on("authenticate", (userData) => {
         if (userData && userData.id) {
           this.connectedUsers.set(socket.id, userData);
           socket.join(`user_${userData.id}`); // Join user-specific room
@@ -29,7 +38,7 @@ class WebSocketService {
       });
 
       // Handle disconnection
-      socket.on('disconnect', () => {
+      socket.on("disconnect", () => {
         const userData = this.connectedUsers.get(socket.id);
         if (userData) {
           console.log(`User ${userData.id} disconnected`);
@@ -42,24 +51,24 @@ class WebSocketService {
   }
 
   // Broadcast request updates to all relevant users
-  broadcastRequestUpdate(request, action = 'updated') {
+  broadcastRequestUpdate(request, action = "updated") {
     if (!this.io) return;
 
     const updateData = {
-      type: 'REQUEST_UPDATE',
+      type: "REQUEST_UPDATE",
       action, // 'created', 'updated', 'deleted'
       request,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Broadcast to all users (they'll filter on frontend based on their role)
-    this.io.emit('requestUpdate', updateData);
+    this.io.emit("requestUpdate", updateData);
 
     // Also broadcast to specific roles
-    this.io.to('role_user').emit('requestUpdate', updateData);
-    this.io.to('role_supervisor').emit('requestUpdate', updateData);
-    this.io.to('role_technical-manager').emit('requestUpdate', updateData);
-    this.io.to('role_engineer').emit('requestUpdate', updateData);
+    this.io.to("role_user").emit("requestUpdate", updateData);
+    this.io.to("role_supervisor").emit("requestUpdate", updateData);
+    this.io.to("role_technical-manager").emit("requestUpdate", updateData);
+    this.io.to("role_engineer").emit("requestUpdate", updateData);
 
     console.log(`Broadcasted ${action} for request ${request.id}`);
   }
@@ -84,7 +93,7 @@ class WebSocketService {
   // Get connected users by role
   getConnectedUsersByRole(role) {
     const users = Array.from(this.connectedUsers.values());
-    return users.filter(user => user.role === role);
+    return users.filter((user) => user.role === role);
   }
 }
 
