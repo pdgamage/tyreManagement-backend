@@ -31,11 +31,13 @@ const syncAndAlterDatabase = async () => {
     await connection.query(
       "ALTER TABLE requests MODIFY COLUMN status VARCHAR(50);"
     );
-    console.log("Successfully altered 'requests' table: 'status' column is now VARCHAR(50).");
+    console.log(
+      "Successfully altered 'requests' table: 'status' column is now VARCHAR(50)."
+    );
 
     connection.release();
   } catch (error) {
-    if (error.code === 'ER_DUP_FIELDNAME') {
+    if (error.code === "ER_DUP_FIELDNAME") {
       console.log("Schema already altered.");
     } else {
       console.error("Failed to alter database schema:", error);
