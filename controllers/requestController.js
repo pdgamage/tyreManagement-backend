@@ -189,6 +189,17 @@ exports.updateRequestStatus = async (req, res) => {
         request.technical_manager_id = null;
       }
     }
+    if (
+      status === "customer-officer approved" ||
+      status === "order placed" ||
+      (status === "rejected" && role === "customer-officer")
+    ) {
+      request.customer_officer_note = notes;
+      // Store the customer officer ID who made the decision
+      if (userId) {
+        request.customer_officer_decision_by = userId;
+      }
+    }
 
     console.log("Attempting to save request with status:", status);
     console.log("Request data before save:", {
@@ -234,6 +245,14 @@ exports.updateRequestStatus = async (req, res) => {
         (status === "rejected" && req.body.role === "engineer")
       ) {
         updateQuery += ", engineer_note = ?";
+        params.push(notes);
+      }
+      if (
+        status === "customer-officer approved" ||
+        status === "order placed" ||
+        (status === "rejected" && req.body.role === "customer-officer")
+      ) {
+        updateQuery += ", customer_officer_note = ?";
         params.push(notes);
       }
 

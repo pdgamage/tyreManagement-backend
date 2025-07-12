@@ -45,6 +45,7 @@ const Request = sequelize.define(
     supervisor_notes: { type: DataTypes.TEXT },
     technical_manager_note: { type: DataTypes.TEXT },
     engineer_note: { type: DataTypes.TEXT },
+    customer_officer_note: { type: DataTypes.TEXT },
     supervisorId: {
       type: DataTypes.INTEGER,
       allowNull: false, // or true if you want it optional
@@ -72,6 +73,14 @@ const Request = sequelize.define(
     engineer_decision_by: {
       type: DataTypes.INTEGER,
       allowNull: true, // tracks which engineer approved/rejected
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    customer_officer_decision_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // tracks which customer officer processed the order
       references: {
         model: "users",
         key: "id",
