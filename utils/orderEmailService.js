@@ -104,19 +104,29 @@ Thank you,
 SLT Mobitel Tire Management
     `.trim();
 
-    // Prepare the email payload for Formspree - clean and simple
+    // Prepare the email payload for Formspree - simplified with essential info only
     const formspreePayload = {
-      //email: supplier.email,
-      //subject: emailData.subject,
+      email: supplier.email,
+      subject: emailData.subject,
       message: professionalMessage,
-     // _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
-      //_subject: emailData.subject
+      _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
+      _subject: emailData.subject,
+      // Essential order information
+      request_id: request.id,
+      vehicle_number: request.vehicleNumber,
+      tire_size: request.tireSizeRequired,
+      quantity: request.quantity,
+      tubes_quantity: request.tubesQuantity,
+      requester_name: request.requesterName,
+      requester_email: request.requesterEmail,
+      requester_phone: request.requesterPhone,
+      order_notes: orderNotes || 'None'
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
     console.log('Formspree payload sample:', {
-      //email: formspreePayload.email,
-      //subject: formspreePayload.subject,
+      email: formspreePayload.email,
+      subject: formspreePayload.subject,
       vehicle_number: formspreePayload.vehicle_number,
       tire_size: formspreePayload.tire_size
     });
