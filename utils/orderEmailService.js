@@ -80,8 +80,10 @@ SLT Mobitel
 Phone: ${request.requesterPhone}
 Email: ${request.requesterEmail}`;
 
-    // Prepare the email payload for Formspree - only the message content
+    // Prepare the email payload for Formspree - restored email and subject
     const formspreePayload = {
+      email: supplier.email,
+      subject: emailSubject,
       message: professionalMessage,
       _replyto: request.requesterEmail,
       _subject: emailSubject
