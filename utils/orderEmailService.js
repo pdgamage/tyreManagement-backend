@@ -84,61 +84,33 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       formsfree_key: supplier.formsfree_key
     });
 
-    // Create a clean, concise message with only essential information
+    // Create a simple business letter format with essential information only
     const professionalMessage = `
-🚛 TIRE ORDER REQUEST - #${request.id}
-
 Dear ${supplier.name},
 
-We need to order tires for our vehicle. Please provide availability and pricing.
+We would like to request a quotation for the following tire order:
 
-TIRE REQUIREMENTS:
-• Size: ${request.tireSizeRequired}
-• Quantity: ${request.quantity} tires
-• Tubes: ${request.tubesQuantity} tubes
-• Vehicle: ${request.vehicleNumber} (${request.vehicleBrand} ${request.vehicleModel})
+Vehicle: ${request.vehicleNumber} (${request.vehicleBrand} ${request.vehicleModel})
+Tire Size: ${request.tireSizeRequired}
+Quantity: ${request.quantity} tires + ${request.tubesQuantity} tubes
 
-${orderNotes && orderNotes !== 'N/A' && orderNotes !== 'None' ? `
-SPECIAL NOTES:
-${orderNotes}
-` : ''}
+${orderNotes && orderNotes !== 'N/A' && orderNotes !== 'None' && orderNotes.trim() !== 'ok' ? `Notes: ${orderNotes}` : ''}
 
-PLEASE PROVIDE:
-1. ✅ Availability confirmation
-2. 💰 Unit price and total cost
-3. 📅 Delivery timeline
-4. 🚚 Delivery location options
+Please provide availability, pricing, and delivery timeline.
 
-CONTACT:
-${request.requesterName}
-📧 ${request.requesterEmail}
-📱 ${request.requesterPhone}
-🏢 ${request.userSection}
+Contact: ${request.requesterName} | ${request.requesterEmail} | ${request.requesterPhone}
 
-Thank you for your quick response.
-
-Best regards,
-SLT Mobitel - Tire Management
-Request Date: ${new Date().toLocaleDateString()}
+Thank you,
+SLT Mobitel Tire Management
     `.trim();
 
-    // Prepare the email payload for Formspree - simplified with essential info only
+    // Prepare the email payload for Formspree - clean and simple
     const formspreePayload = {
       email: supplier.email,
       subject: emailData.subject,
       message: professionalMessage,
       _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
-      _subject: emailData.subject,
-      // Essential order information
-      request_id: request.id,
-      vehicle_number: request.vehicleNumber,
-      tire_size: request.tireSizeRequired,
-      quantity: request.quantity,
-      tubes_quantity: request.tubesQuantity,
-      requester_name: request.requesterName,
-      requester_email: request.requesterEmail,
-      requester_phone: request.requesterPhone,
-      order_notes: orderNotes || 'None'
+      _subject: emailData.subject
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
