@@ -84,108 +84,53 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       formsfree_key: supplier.formsfree_key
     });
 
-    // Create a simplified but professional plain text message for better compatibility
+    // Create a clean, concise message with only essential information
     const professionalMessage = `
-🚛 TIRE ORDER REQUEST - Request #${request.id}
-═══════════════════════════════════════════════════════════════
+🚛 TIRE ORDER REQUEST - #${request.id}
 
 Dear ${supplier.name},
 
-We would like to place an order for tires with the following specifications.
-Please review the details below and confirm availability.
+We need to order tires for our vehicle. Please provide availability and pricing.
 
-┌─────────────────────────────────────────────────────────────┐
-│ 🚗 VEHICLE INFORMATION                                      │
-├─────────────────────────────────────────────────────────────┤
-│ Vehicle Number:     ${request.vehicleNumber}
-│ Brand & Model:      ${request.vehicleBrand} ${request.vehicleModel}
-│ Year:               ${request.year}
-│ Present KM:         ${request.presentKmReading?.toLocaleString() || 'N/A'}
-│ Previous KM:        ${request.previousKmReading?.toLocaleString() || 'N/A'}
-│ Last Replacement:   ${new Date(request.lastReplacementDate).toLocaleDateString()}
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ 🛞 TIRE SPECIFICATIONS                                      │
-├─────────────────────────────────────────────────────────────┤
-│ ⭐ Tire Size Required: ${request.tireSizeRequired}
-│ ⭐ Quantity:           ${request.quantity}
-│ ⭐ Tubes Quantity:     ${request.tubesQuantity}
-│ ⭐ Existing Tire Make: ${request.existingTireMake}
-│ ⭐ Tire Wear Pattern:  ${request.tireWearPattern}
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ 👤 REQUESTER INFORMATION                                    │
-├─────────────────────────────────────────────────────────────┤
-│ Name:               ${request.requesterName}
-│ Email:              ${request.requesterEmail}
-│ Phone:              ${request.requesterPhone}
-│ Department:         ${request.userSection}
-│ Cost Center:        ${request.costCenter}
-└─────────────────────────────────────────────────────────────┘
+TIRE REQUIREMENTS:
+• Size: ${request.tireSizeRequired}
+• Quantity: ${request.quantity} tires
+• Tubes: ${request.tubesQuantity} tubes
+• Vehicle: ${request.vehicleNumber} (${request.vehicleBrand} ${request.vehicleModel})
 
 ${orderNotes && orderNotes !== 'N/A' && orderNotes !== 'None' ? `
-┌─────────────────────────────────────────────────────────────┐
-│ 📝 SPECIAL ORDER NOTES                                      │
-├─────────────────────────────────────────────────────────────┤
-│ ${orderNotes}
-└─────────────────────────────────────────────────────────────┘
+SPECIAL NOTES:
+${orderNotes}
 ` : ''}
 
-┌─────────────────────────────────────────────────────────────┐
-│ 📋 REQUIRED INFORMATION                                     │
-├─────────────────────────────────────────────────────────────┤
-│ Please confirm receipt of this order and provide:          │
-│                                                             │
-│ ✅ 1. TIRE AVAILABILITY                                     │
-│    → Confirm stock status for the requested tire size      │
-│                                                             │
-│ ✅ 2. PRICING INFORMATION                                   │
-│    → Unit price and total cost including taxes             │
-│                                                             │
-│ ✅ 3. DELIVERY TIMELINE                                     │
-│    → Expected delivery date and time                       │
-│                                                             │
-│ ✅ 4. PAYMENT TERMS                                         │
-│    → Preferred payment method and terms                    │
-│                                                             │
-│ ✅ 5. INSTALLATION SERVICES                                 │
-│    → If available, please include installation options     │
-└─────────────────────────────────────────────────────────────┘
+PLEASE PROVIDE:
+1. ✅ Availability confirmation
+2. 💰 Unit price and total cost
+3. 📅 Delivery timeline
+4. 🚚 Delivery location options
 
-┌─────────────────────────────────────────────────────────────┐
-│ 📞 CONTACT INFORMATION                                      │
-├─────────────────────────────────────────────────────────────┤
-│ For any questions regarding this order, please contact:    │
-│                                                             │
-│ 👤 Contact Person: ${request.requesterName}
-│ 📧 Email Address:  ${request.requesterEmail}
-│ 📱 Phone Number:   ${request.requesterPhone}
-│ 🏢 Department:     ${request.userSection}
-└─────────────────────────────────────────────────────────────┘
+CONTACT:
+${request.requesterName}
+📧 ${request.requesterEmail}
+📱 ${request.requesterPhone}
+🏢 ${request.userSection}
 
-Thank you for your prompt attention to this order request.
-We look forward to your confirmation and working with you.
+Thank you for your quick response.
 
 Best regards,
-🏢 SLT Mobitel - Tire Management System
-
-═══════════════════════════════════════════════════════════════
-Order Date: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-Request ID: #${request.id}
-Vehicle: ${request.vehicleNumber} (${request.vehicleBrand} ${request.vehicleModel})
-═══════════════════════════════════════════════════════════════
+SLT Mobitel - Tire Management
+Request Date: ${new Date().toLocaleDateString()}
     `.trim();
 
-    // Prepare the email payload for Formspree
+    // Prepare the email payload for Formspree - simplified with essential info only
     const formspreePayload = {
       email: supplier.email,
       subject: emailData.subject,
-      message: professionalMessage, // Use professional plain text message
+      message: professionalMessage,
       _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
       _subject: emailData.subject,
-      // Additional structured data for the supplier
+      // Essential order information
+      request_id: request.id,
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
@@ -193,12 +138,7 @@ Vehicle: ${request.vehicleNumber} (${request.vehicleBrand} ${request.vehicleMode
       requester_name: request.requesterName,
       requester_email: request.requesterEmail,
       requester_phone: request.requesterPhone,
-      order_notes: orderNotes || 'None',
-      request_id: request.id,
-      vehicle_brand: request.vehicleBrand,
-      vehicle_model: request.vehicleModel,
-      order_date: new Date().toLocaleDateString(),
-      order_time: new Date().toLocaleTimeString()
+      order_notes: orderNotes || 'None'
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
