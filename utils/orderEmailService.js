@@ -80,11 +80,11 @@ SLT Mobitel
 Phone: ${request.requesterPhone}
 Email: ${request.requesterEmail}`;
 
-    // Prepare the email payload for Formspree - only the essential message
+    // Prepare the email payload for Formspree - only the message content
     const formspreePayload = {
-      email: supplier.email,
-      subject: emailSubject,
-      message: professionalMessage
+      message: professionalMessage,
+      _replyto: request.requesterEmail,
+      _subject: emailSubject
     };
 
     console.log('Final email message being sent:');
