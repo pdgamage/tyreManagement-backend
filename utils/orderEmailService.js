@@ -5,57 +5,8 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
-    // Prepare the email data
-    const emailData = {
-      // Supplier information
-      supplier_name: supplier.name,
-      supplier_email: supplier.email,
-      supplier_phone: supplier.phone || 'N/A',
-      
-      // Request details
-      request_id: request.id,
-      vehicle_number: request.vehicleNumber,
-      vehicle_brand: request.vehicleBrand,
-      vehicle_model: request.vehicleModel,
-      vehicle_year: request.year,
-      
-      // Requester information
-      requester_name: request.requesterName,
-      requester_email: request.requesterEmail,
-      requester_phone: request.requesterPhone,
-      user_section: request.userSection,
-      
-      // Tire specifications
-      tire_size_required: request.tireSizeRequired,
-      quantity: request.quantity,
-      tubes_quantity: request.tubesQuantity,
-      existing_tire_make: request.existingTireMake,
-      tire_wear_pattern: request.tireWearPattern,
-      cost_center: request.costCenter,
-      
-      // Vehicle readings
-      present_km_reading: request.presentKmReading?.toLocaleString() || 'N/A',
-      previous_km_reading: request.previousKmReading?.toLocaleString() || 'N/A',
-      last_replacement_date: new Date(request.lastReplacementDate).toLocaleDateString(),
-      
-      // Request information
-      request_reason: request.requestReason,
-      comments: request.comments || 'N/A',
-      order_notes: orderNotes || 'N/A',
-      
-      // Approval information
-      supervisor_notes: request.supervisor_notes || 'N/A',
-      technical_manager_notes: request.technical_manager_note || 'N/A',
-      engineer_notes: request.engineer_note || 'N/A',
-      
-      // Order details
-      order_date: new Date().toLocaleDateString(),
-      order_time: new Date().toLocaleTimeString(),
-      
-      // Email subject and content - using professional plain text format for better compatibility
-      subject: `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`,
-      message: 'This will be replaced by the professional message in the payload'
-    };
+    // Create email subject
+    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
 
 
     // Handle different formats of formsfree_key
@@ -107,10 +58,10 @@ Email: ${request.requesterEmail}
     // Prepare the email payload for Formspree - clean business letter only
     const formspreePayload = {
       email: supplier.email,
-      subject: emailData.subject,
+      subject: emailSubject,
       message: professionalMessage,
       _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
-      _subject: emailData.subject
+      _subject: emailSubject
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
