@@ -106,17 +106,17 @@ SLT Mobitel Tire Management
 
     // Prepare the email payload for Formspree - clean and simple
     const formspreePayload = {
-      email: supplier.email,
-      subject: emailData.subject,
+      //email: supplier.email,
+      //subject: emailData.subject,
       message: professionalMessage,
-      _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
-      _subject: emailData.subject
+     // _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
+      //_subject: emailData.subject
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
     console.log('Formspree payload sample:', {
-      email: formspreePayload.email,
-      subject: formspreePayload.subject,
+      //email: formspreePayload.email,
+      //subject: formspreePayload.subject,
       vehicle_number: formspreePayload.vehicle_number,
       tire_size: formspreePayload.tire_size
     });
