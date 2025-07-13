@@ -43,33 +43,25 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       trimmed: orderNotes ? orderNotes.trim() : 'null/undefined'
     });
 
-    // Check if we should include notes - exclude common placeholder values
-    const trimmedNotes = orderNotes ? orderNotes.trim() : '';
-    const isPlaceholder = ['ok', 'n/a', 'none', ''].includes(trimmedNotes.toLowerCase());
-    const shouldIncludeNotes = trimmedNotes.length > 0 && !isPlaceholder;
+    // Check if we should include notes
+    const shouldIncludeNotes = orderNotes &&
+                              orderNotes.trim() !== '' &&
+                              orderNotes.trim().toLowerCase() !== 'ok' &&
+                              orderNotes.trim() !== 'N/A' &&
+                              orderNotes.trim() !== 'None';
 
     console.log('Should include notes:', shouldIncludeNotes);
-    console.log('Trimmed notes:', trimmedNotes);
-    console.log('Is placeholder:', isPlaceholder);
-    if (shouldIncludeNotes) {
-        console.log('Notes will be included in email:', trimmedNotes);
-    }
 
     // Create a professional business letter format
-    let professionalMessage = `Dear ${supplier.name},
+    const professionalMessage = `
+Dear ${supplier.name},
 
 We require a quotation for tire supply to our vehicle fleet.
 
 Vehicle Number: ${request.vehicleNumber}
 Tire Size: ${request.tireSizeRequired}
-Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}`;
-
-    // Add notes if they exist
-    if (shouldIncludeNotes) {
-        professionalMessage += `\nNote: ${trimmedNotes}`;
-    }
-
-    professionalMessage += `
+Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}
+${shouldIncludeNotes ? `\nNote: ${orderNotes.trim()}` : ''}
 
 Please provide your best pricing and delivery schedule.
 
@@ -78,15 +70,14 @@ ${request.requesterName}
 ${request.userSection}
 SLT Mobitel
 Phone: ${request.requesterPhone}
-Email: ${request.requesterEmail}`;
+Email: ${request.requesterEmail}
+    `.trim();
 
-    // Prepare the email payload for Formspree - restored email and subject
+    // Prepare the email payload for Formspree - only the essential message
     const formspreePayload = {
       email: supplier.email,
       subject: emailSubject,
-      message: professionalMessage,
-      _replyto: request.requesterEmail,
-      _subject: emailSubject
+      message: professionalMessage
     };
 
     console.log('Final email message being sent:');
