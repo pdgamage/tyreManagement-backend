@@ -35,6 +35,23 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       formsfree_key: supplier.formsfree_key
     });
 
+    // Debug order notes
+    console.log('Order notes received:', {
+      orderNotes: orderNotes,
+      type: typeof orderNotes,
+      length: orderNotes ? orderNotes.length : 0,
+      trimmed: orderNotes ? orderNotes.trim() : 'null/undefined'
+    });
+
+    // Check if we should include notes
+    const shouldIncludeNotes = orderNotes &&
+                              orderNotes.trim() !== '' &&
+                              orderNotes.trim().toLowerCase() !== 'ok' &&
+                              orderNotes.trim() !== 'N/A' &&
+                              orderNotes.trim() !== 'None';
+
+    console.log('Should include notes:', shouldIncludeNotes);
+
     // Create a professional business letter format
     const professionalMessage = `
 Dear ${supplier.name},
@@ -44,7 +61,7 @@ We require a quotation for tire supply to our vehicle fleet.
 Vehicle Number: ${request.vehicleNumber}
 Tire Size: ${request.tireSizeRequired}
 Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}
-${orderNotes && orderNotes !== 'N/A' && orderNotes !== 'None' && orderNotes.trim() !== 'ok' && orderNotes.trim() !== '' ? `\nNote: ${orderNotes}` : ''}
+${shouldIncludeNotes ? `\nNote: ${orderNotes.trim()}` : ''}
 
 Please provide your best pricing and delivery schedule.
 
@@ -63,13 +80,12 @@ Email: ${request.requesterEmail}
       message: professionalMessage
     };
 
+    console.log('Final email message being sent:');
+    console.log('=================================');
+    console.log(professionalMessage);
+    console.log('=================================');
+
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
-    console.log('Formspree payload sample:', {
-      email: formspreePayload.email,
-      subject: formspreePayload.subject,
-      vehicle_number: formspreePayload.vehicle_number,
-      tire_size: formspreePayload.tire_size
-    });
 
     const response = await fetch(formspreeUrl, {
       method: 'POST',
