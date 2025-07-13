@@ -53,209 +53,59 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
       order_time: new Date().toLocaleTimeString(),
       
       // Email subject and content
-      subject: `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`,
-      plainTextMessage: `
-TIRE ORDER REQUEST - Request #${request.id}
-
+      subject: `Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`,
+      message: `
 Dear ${supplier.name},
 
 We would like to place an order for tires with the following specifications:
 
-═══════════════════════════════════════════════════════════════
-🚗 VEHICLE INFORMATION
-═══════════════════════════════════════════════════════════════
-• Vehicle Number: ${request.vehicleNumber}
-• Brand & Model: ${request.vehicleBrand} ${request.vehicleModel}
-• Year: ${request.year}
-• Present KM Reading: ${request.presentKmReading?.toLocaleString() || 'N/A'}
+VEHICLE INFORMATION:
+- Vehicle Number: ${request.vehicleNumber}
+- Brand: ${request.vehicleBrand}
+- Model: ${request.vehicleModel}
+- Year: ${request.year}
 
-═══════════════════════════════════════════════════════════════
-🛞 TIRE SPECIFICATIONS
-═══════════════════════════════════════════════════════════════
-• Tire Size Required: ${request.tireSizeRequired}
-• Quantity: ${request.quantity}
-• Tubes Quantity: ${request.tubesQuantity}
-• Existing Tire Make: ${request.existingTireMake}
-• Tire Wear Pattern: ${request.tireWearPattern}
+TIRE SPECIFICATIONS:
+- Tire Size Required: ${request.tireSizeRequired}
+- Quantity: ${request.quantity}
+- Tubes Quantity: ${request.tubesQuantity}
+- Existing Tire Make: ${request.existingTireMake}
 
-═══════════════════════════════════════════════════════════════
-👤 REQUESTER INFORMATION
-═══════════════════════════════════════════════════════════════
-• Name: ${request.requesterName}
-• Email: ${request.requesterEmail}
-• Phone: ${request.requesterPhone}
-• Department: ${request.userSection}
-• Cost Center: ${request.costCenter}
+VEHICLE DETAILS:
+- Present KM Reading: ${request.presentKmReading?.toLocaleString() || 'N/A'}
+- Previous KM Reading: ${request.previousKmReading?.toLocaleString() || 'N/A'}
+- Last Replacement Date: ${new Date(request.lastReplacementDate).toLocaleDateString()}
+- Tire Wear Pattern: ${request.tireWearPattern}
 
-${orderNotes && orderNotes !== 'N/A' ? `
-═══════════════════════════════════════════════════════════════
-📝 SPECIAL ORDER NOTES
-═══════════════════════════════════════════════════════════════
-${orderNotes}
-` : ''}
+REQUESTER INFORMATION:
+- Name: ${request.requesterName}
+- Email: ${request.requesterEmail}
+- Phone: ${request.requesterPhone}
+- Section: ${request.userSection}
+- Cost Center: ${request.costCenter}
 
-═══════════════════════════════════════════════════════════════
-📋 REQUIRED INFORMATION
-═══════════════════════════════════════════════════════════════
+REQUEST DETAILS:
+- Request ID: ${request.id}
+- Request Reason: ${request.requestReason}
+- Comments: ${request.comments || 'N/A'}
+- Order Notes: ${orderNotes || 'N/A'}
+
+APPROVAL HISTORY:
+- Supervisor Notes: ${request.supervisor_notes || 'N/A'}
+- Technical Manager Notes: ${request.technical_manager_note || 'N/A'}
+- Engineer Notes: ${request.engineer_note || 'N/A'}
+
 Please confirm receipt of this order and provide:
-
-1. TIRE AVAILABILITY - Confirm stock status for the requested tire size
-2. PRICING INFORMATION - Unit price and total cost including taxes
-3. DELIVERY TIMELINE - Expected delivery date and time
-4. PAYMENT TERMS - Preferred payment method and terms
-5. INSTALLATION SERVICES - If available, please include installation options
-
-═══════════════════════════════════════════════════════════════
-📞 CONTACT INFORMATION
-═══════════════════════════════════════════════════════════════
-For any questions regarding this order, please contact:
-${request.requesterName} | ${request.requesterEmail} | ${request.requesterPhone}
+1. Availability of the requested tires
+2. Pricing information
+3. Expected delivery timeline
+4. Any additional requirements
 
 Thank you for your service.
 
 Best regards,
 Tire Management System
-Order Date: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-Request ID: #${request.id}
-      `.trim(),
-      message: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tire Order Request</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0 0 0; opacity: 0.9; }
-        .section { margin-bottom: 25px; }
-        .section-title { background: #f8f9fa; padding: 12px 15px; border-left: 4px solid #667eea; font-weight: bold; color: #2c3e50; margin-bottom: 15px; border-radius: 0 5px 5px 0; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .info-item { background: #f8f9fa; padding: 12px; border-radius: 5px; border: 1px solid #e9ecef; }
-        .info-label { font-weight: bold; color: #495057; margin-bottom: 5px; }
-        .info-value { color: #6c757d; }
-        .highlight { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 0 5px 5px 0; margin: 15px 0; }
-        .action-items { background: #f0f8ff; padding: 20px; border-radius: 8px; border: 2px solid #4a90e2; }
-        .action-items h3 { color: #2c5aa0; margin-top: 0; }
-        .action-items ol { margin: 10px 0; padding-left: 20px; }
-        .action-items li { margin-bottom: 8px; color: #34495e; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #7f8c8d; }
-        .contact-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
-        @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚛 Tire Order Request</h1>
-            <p>Request #${request.id} | Vehicle ${request.vehicleNumber}</p>
-        </div>
-
-        <p>Dear <strong>${supplier.name}</strong>,</p>
-        <p>We would like to place an order for tires with the following specifications. Please review the details below and confirm availability.</p>
-
-        <div class="section">
-            <div class="section-title">🚗 Vehicle Information</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Vehicle Number</div>
-                    <div class="info-value">${request.vehicleNumber}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Brand & Model</div>
-                    <div class="info-value">${request.vehicleBrand} ${request.vehicleModel}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Year</div>
-                    <div class="info-value">${request.year}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Present KM Reading</div>
-                    <div class="info-value">${request.presentKmReading?.toLocaleString() || 'N/A'}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">🛞 Tire Specifications</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Tire Size Required</div>
-                    <div class="info-value"><strong>${request.tireSizeRequired}</strong></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Quantity</div>
-                    <div class="info-value"><strong>${request.quantity}</strong></div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Tubes Quantity</div>
-                    <div class="info-value">${request.tubesQuantity}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Existing Tire Make</div>
-                    <div class="info-value">${request.existingTireMake}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">👤 Requester Information</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Name</div>
-                    <div class="info-value">${request.requesterName}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Email</div>
-                    <div class="info-value">${request.requesterEmail}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Phone</div>
-                    <div class="info-value">${request.requesterPhone}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Department</div>
-                    <div class="info-value">${request.userSection}</div>
-                </div>
-            </div>
-        </div>
-
-        ${orderNotes && orderNotes !== 'N/A' ? `
-        <div class="highlight">
-            <strong>📝 Special Order Notes:</strong><br>
-            ${orderNotes}
-        </div>
-        ` : ''}
-
-        <div class="action-items">
-            <h3>📋 Required Information</h3>
-            <p>Please confirm receipt of this order and provide the following:</p>
-            <ol>
-                <li><strong>Tire Availability</strong> - Confirm stock status for the requested tire size</li>
-                <li><strong>Pricing Information</strong> - Unit price and total cost including any applicable taxes</li>
-                <li><strong>Delivery Timeline</strong> - Expected delivery date and time</li>
-                <li><strong>Payment Terms</strong> - Preferred payment method and terms</li>
-                <li><strong>Installation Services</strong> - If available, please include installation options</li>
-            </ol>
-        </div>
-
-        <div class="contact-info">
-            <strong>📞 Contact Information:</strong><br>
-            For any questions regarding this order, please contact:<br>
-            <strong>${request.requesterName}</strong> | ${request.requesterEmail} | ${request.requesterPhone}
-        </div>
-
-        <div class="footer">
-            <p><strong>Tire Management System</strong></p>
-            <p>Order Date: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-            <p>Request ID: #${request.id}</p>
-        </div>
-    </div>
-</body>
-</html>
+Order Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
       `.trim()
     };
 
@@ -290,12 +140,10 @@ Request ID: #${request.id}
     const formspreePayload = {
       email: supplier.email,
       subject: emailData.subject,
-      message: emailData.message, // HTML version
+      message: emailData.message,
       _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
       _subject: emailData.subject,
-      _format: 'html', // Tell Formspree to send HTML email
-      _text: emailData.plainTextMessage, // Plain text fallback
-      // Additional structured data for the supplier
+      // Additional fields for the supplier
       vehicle_number: request.vehicleNumber,
       tire_size: request.tireSizeRequired,
       quantity: request.quantity,
@@ -303,12 +151,7 @@ Request ID: #${request.id}
       requester_name: request.requesterName,
       requester_email: request.requesterEmail,
       requester_phone: request.requesterPhone,
-      order_notes: orderNotes || 'None',
-      request_id: request.id,
-      vehicle_brand: request.vehicleBrand,
-      vehicle_model: request.vehicleModel,
-      order_date: new Date().toLocaleDateString(),
-      order_time: new Date().toLocaleTimeString()
+      order_notes: orderNotes || 'None'
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
