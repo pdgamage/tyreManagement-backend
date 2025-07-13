@@ -44,6 +44,7 @@ We require a quotation for tire supply to our vehicle fleet.
 Vehicle Number: ${request.vehicleNumber}
 Tire Size: ${request.tireSizeRequired}
 Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}
+${orderNotes && orderNotes !== 'N/A' && orderNotes !== 'None' && orderNotes.trim() !== 'ok' && orderNotes.trim() !== '' ? `\nNote: ${orderNotes}` : ''}
 
 Please provide your best pricing and delivery schedule.
 
@@ -55,13 +56,11 @@ Phone: ${request.requesterPhone}
 Email: ${request.requesterEmail}
     `.trim();
 
-    // Prepare the email payload for Formspree - clean business letter only
+    // Prepare the email payload for Formspree - only the essential message
     const formspreePayload = {
       email: supplier.email,
       subject: emailSubject,
-      message: professionalMessage,
-      _replyto: request.requesterEmail || 'noreply@tyremanagement.com',
-      _subject: emailSubject
+      message: professionalMessage
     };
 
     console.log('Formspree payload keys:', Object.keys(formspreePayload));
