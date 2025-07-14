@@ -52,6 +52,16 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
 
     console.log('Should include notes:', shouldIncludeNotes);
 
+    // Create delivery address paragraph
+    const deliveryAddress = [];
+    if (request.deliveryOfficeName) deliveryAddress.push(request.deliveryOfficeName);
+    if (request.deliveryStreetName) deliveryAddress.push(request.deliveryStreetName);
+    if (request.deliveryTown) deliveryAddress.push(request.deliveryTown);
+
+    const deliveryText = deliveryAddress.length > 0
+      ? `\n\nDelivery Address: ${deliveryAddress.join(', ')}`
+      : '';
+
     // Create a professional business letter format
     const professionalMessage = `
 Dear ${supplier.name},
@@ -60,7 +70,7 @@ We require a quotation for tire supply to our vehicle fleet.
 
 Vehicle Number: ${request.vehicleNumber}
 Tire Size: ${request.tireSizeRequired}
-Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}
+Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}${deliveryText}
 ${shouldIncludeNotes ? `\nNote: ${orderNotes.trim()}` : ''}
 
 Please provide your best pricing and delivery schedule.
