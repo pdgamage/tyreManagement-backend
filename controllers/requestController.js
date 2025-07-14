@@ -16,8 +16,6 @@ exports.createRequest = async (req, res) => {
     requestData.presentKmReading = Number(requestData.presentKmReading);
     requestData.previousKmReading = Number(requestData.previousKmReading);
     requestData.userId = Number(requestData.userId);
-    requestData.totalPrice = Number(requestData.totalPrice);
-    requestData.warrantyDistance = Number(requestData.warrantyDistance);
 
     // Validate required fields
     const requiredFields = [
@@ -42,12 +40,6 @@ exports.createRequest = async (req, res) => {
       "presentKmReading",
       "previousKmReading",
       "tireWearPattern",
-      "deliveryOfficeName",
-      "deliveryStreetName",
-      "deliveryTown",
-      "totalPrice",
-      "warrantyDistance",
-      "tireWearIndicatorAppeared",
     ];
     for (const field of requiredFields) {
       if (
