@@ -86,23 +86,29 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
 
     console.log('Final delivery text:', deliveryText);
 
-    // Create a professional business letter format
+    // Create a beautiful professional business letter format
     const professionalMessage = `
 Dear ${supplier.name},
 
-We require a quotation for tire supply to our vehicle fleet.
+I hope this message finds you well. We are writing to request a quotation for tire supply to our vehicle fleet.
 
-Vehicle Number: ${request.vehicleNumber}
-Tire Size: ${request.tireSizeRequired}
-Quantity Required: ${request.quantity} tires${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tubes` : ''}${deliveryText}
-${shouldIncludeNotes ? `\nNote: ${orderNotes.trim()}` : ''}
+We have an immediate requirement for the following specifications:
 
-Please provide your best pricing and delivery schedule.
+    • Vehicle Number: ${request.vehicleNumber}
+    • Tire Size Required: ${request.tireSizeRequired}
+    • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryText}
 
-Regards,
+${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service. Your prompt response would be highly valued as we aim to maintain our fleet operations efficiently.
+
+Thank you for your continued partnership and support. We look forward to hearing from you soon.
+
+Warm regards,
+
 ${request.requesterName}
 ${request.userSection}
 SLT Mobitel
+
+Contact Information:
 Phone: ${request.requesterPhone}
 Email: ${request.requesterEmail}
     `.trim();
