@@ -52,15 +52,39 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
 
     console.log('Should include notes:', shouldIncludeNotes);
 
+    // Debug: Log the request object to see what fields are available
+    console.log('Request object keys:', Object.keys(request));
+    console.log('Delivery fields:', {
+      deliveryOfficeName: request.deliveryOfficeName,
+      deliveryStreetName: request.deliveryStreetName,
+      deliveryTown: request.deliveryTown
+    });
+
     // Create delivery address paragraph
     const deliveryAddress = [];
-    if (request.deliveryOfficeName) deliveryAddress.push(request.deliveryOfficeName);
-    if (request.deliveryStreetName) deliveryAddress.push(request.deliveryStreetName);
-    if (request.deliveryTown) deliveryAddress.push(request.deliveryTown);
+
+    // Safely check and add delivery fields
+    const officeName = request.deliveryOfficeName || request.delivery_office_name || '';
+    const streetName = request.deliveryStreetName || request.delivery_street_name || '';
+    const town = request.deliveryTown || request.delivery_town || '';
+
+    if (officeName && typeof officeName === 'string' && officeName.trim()) {
+      deliveryAddress.push(officeName.trim());
+    }
+    if (streetName && typeof streetName === 'string' && streetName.trim()) {
+      deliveryAddress.push(streetName.trim());
+    }
+    if (town && typeof town === 'string' && town.trim()) {
+      deliveryAddress.push(town.trim());
+    }
+
+    console.log('Delivery address array:', deliveryAddress);
 
     const deliveryText = deliveryAddress.length > 0
       ? `\n\nDelivery Address: ${deliveryAddress.join(', ')}`
       : '';
+
+    console.log('Final delivery text:', deliveryText);
 
     // Create a professional business letter format
     const professionalMessage = `

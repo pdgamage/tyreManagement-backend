@@ -329,6 +329,18 @@ exports.placeOrder = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
 
+    // Debug: Log request data to check if new fields are present
+    console.log('Request data for email:', {
+      id: request.id,
+      vehicleNumber: request.vehicleNumber,
+      deliveryOfficeName: request.deliveryOfficeName,
+      deliveryStreetName: request.deliveryStreetName,
+      deliveryTown: request.deliveryTown,
+      totalPrice: request.totalPrice,
+      warrantyDistance: request.warrantyDistance,
+      tireWearIndicatorAppeared: request.tireWearIndicatorAppeared
+    });
+
     // Check if request is complete (ready for order)
     if (request.status !== "complete") {
       return res.status(400).json({
