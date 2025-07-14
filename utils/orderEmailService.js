@@ -84,7 +84,7 @@ We have an immediate requirement for the following specifications:
 
     • Vehicle Number: ${request.vehicleNumber}
     • Tire Size Required: ${request.tireSizeRequired}
-    • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryText}
+    • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
 
 ${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service. Your prompt response would be highly valued as we aim to maintain our fleet operations efficiently.
 
