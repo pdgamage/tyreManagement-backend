@@ -86,6 +86,30 @@ const Request = sequelize.define(
         key: "id",
       },
     },
+    deliveryOfficeName: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    deliveryStreetName: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    deliveryTown: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    totalPrice: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    warrantyDistance: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    tireWearIndicatorAppeared: {
+      type: DataTypes.ENUM("yes", "no"),
+      allowNull: false,
+    },
   },
   {
     tableName: "requests",
