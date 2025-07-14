@@ -52,39 +52,27 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
 
     console.log('Should include notes:', shouldIncludeNotes);
 
-    // Debug: Log the request object to see what fields are available
-    console.log('Request object keys:', Object.keys(request));
-    console.log('Delivery fields:', {
-      deliveryOfficeName: request.deliveryOfficeName,
-      deliveryStreetName: request.deliveryStreetName,
-      deliveryTown: request.deliveryTown
-    });
+    // Create simple delivery paragraph
+    let deliveryParagraph = '';
 
-    // Create delivery address paragraph
-    const deliveryAddress = [];
+    // Check if any delivery fields exist
+    if (request.deliveryOfficeName || request.deliveryStreetName || request.deliveryTown) {
+      const deliveryParts = [];
 
-    // Safely check and add delivery fields
-    const officeName = request.deliveryOfficeName || request.delivery_office_name || '';
-    const streetName = request.deliveryStreetName || request.delivery_street_name || '';
-    const town = request.deliveryTown || request.delivery_town || '';
+      if (request.deliveryOfficeName) {
+        deliveryParts.push(request.deliveryOfficeName);
+      }
+      if (request.deliveryStreetName) {
+        deliveryParts.push(request.deliveryStreetName);
+      }
+      if (request.deliveryTown) {
+        deliveryParts.push(request.deliveryTown);
+      }
 
-    if (officeName && typeof officeName === 'string' && officeName.trim()) {
-      deliveryAddress.push(officeName.trim());
+      if (deliveryParts.length > 0) {
+        deliveryParagraph = `\n\nPlease arrange delivery to: ${deliveryParts.join(', ')}.`;
+      }
     }
-    if (streetName && typeof streetName === 'string' && streetName.trim()) {
-      deliveryAddress.push(streetName.trim());
-    }
-    if (town && typeof town === 'string' && town.trim()) {
-      deliveryAddress.push(town.trim());
-    }
-
-    console.log('Delivery address array:', deliveryAddress);
-
-    const deliveryText = deliveryAddress.length > 0
-      ? `\n\nDelivery Address: ${deliveryAddress.join(', ')}`
-      : '';
-
-    console.log('Final delivery text:', deliveryText);
 
     // Create a beautiful professional business letter format
     const professionalMessage = `
