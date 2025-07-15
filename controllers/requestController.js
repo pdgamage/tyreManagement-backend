@@ -29,7 +29,6 @@ exports.createRequest = async (req, res) => {
       "requesterName",
       "requesterEmail",
       "requesterPhone",
-      "year",
       "vehicleBrand",
       "vehicleModel",
       "userSection",
@@ -330,7 +329,7 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Debug: Log request data to check if new fields are present
-    console.log('Request data for email:', {
+    console.log("Request data for email:", {
       id: request.id,
       vehicleNumber: request.vehicleNumber,
       deliveryOfficeName: request.deliveryOfficeName,
@@ -338,7 +337,7 @@ exports.placeOrder = async (req, res) => {
       deliveryTown: request.deliveryTown,
       totalPrice: request.totalPrice,
       warrantyDistance: request.warrantyDistance,
-      tireWearIndicatorAppeared: request.tireWearIndicatorAppeared
+      tireWearIndicatorAppeared: request.tireWearIndicatorAppeared,
     });
 
     // Check if request is complete (ready for order)

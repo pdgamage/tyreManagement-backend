@@ -15,7 +15,6 @@ const Request = sequelize.define(
     requesterName: { type: DataTypes.STRING(100), allowNull: false },
     requesterEmail: { type: DataTypes.STRING(100), allowNull: false },
     requesterPhone: { type: DataTypes.STRING(20), allowNull: false },
-    year: { type: DataTypes.STRING(4), allowNull: false },
     vehicleBrand: { type: DataTypes.STRING(50), allowNull: false },
     vehicleModel: { type: DataTypes.STRING(50), allowNull: false },
     userSection: { type: DataTypes.STRING(100), allowNull: false },
