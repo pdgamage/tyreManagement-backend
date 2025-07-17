@@ -2,7 +2,6 @@ const User = require("./User");
 const Vehicle = require("./Vehicle");
 const Request = require("./Request");
 const RequestImage = require("./RequestImage");
-const TireDetails = require("./TireDetails");
 
 // Associations
 User.hasMany(Vehicle, { foreignKey: "registeredBy" });
@@ -17,4 +16,4 @@ Request.belongsTo(Vehicle, { foreignKey: "vehicleId" });
 Request.hasMany(RequestImage, { foreignKey: "requestId" });
 RequestImage.belongsTo(Request, { foreignKey: "requestId" });
 
-module.exports = { User, Vehicle, Request, RequestImage, TireDetails };
+module.exports = { User, Vehicle, Request, RequestImage };
