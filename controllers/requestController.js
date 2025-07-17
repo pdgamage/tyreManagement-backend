@@ -9,13 +9,6 @@ exports.createRequest = async (req, res) => {
   try {
     const requestData = req.body;
 
-    // Debug: Log the received data to check if userSection and costCenter are included
-    console.log("Received request data:", {
-      userSection: requestData.userSection,
-      costCenter: requestData.costCenter,
-      vehicleNumber: requestData.vehicleNumber,
-    });
-
     // Convert numeric fields from string to number
     requestData.vehicleId = Number(requestData.vehicleId);
     requestData.quantity = Number(requestData.quantity);
@@ -87,8 +80,22 @@ exports.createRequest = async (req, res) => {
 exports.getAllRequests = async (req, res) => {
   try {
     const requests = await Request.findAll();
-    res.json(requests);
+
+    // Fetch images for each request
+    const requestsWithImages = await Promise.all(
+      requests.map(async (request) => {
+        const images = await RequestImage.findAll({
+          where: { requestId: request.id },
+          order: [["imageIndex", "ASC"]],
+        });
+        const imageUrls = images.map((img) => img.imagePath);
+        return { ...request.toJSON(), images: imageUrls };
+      })
+    );
+
+    res.json(requestsWithImages);
   } catch (error) {
+    console.error("Error in getAllRequests:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -310,7 +317,20 @@ exports.getRequestsByUser = async (req, res) => {
       where: { userId },
       order: [["submittedAt", "DESC"]],
     });
-    res.json(requests);
+
+    // Fetch images for each request
+    const requestsWithImages = await Promise.all(
+      requests.map(async (request) => {
+        const images = await RequestImage.findAll({
+          where: { requestId: request.id },
+          order: [["imageIndex", "ASC"]],
+        });
+        const imageUrls = images.map((img) => img.imagePath);
+        return { ...request.toJSON(), images: imageUrls };
+      })
+    );
+
+    res.json(requestsWithImages);
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
