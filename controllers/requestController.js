@@ -9,6 +9,13 @@ exports.createRequest = async (req, res) => {
   try {
     const requestData = req.body;
 
+    // Debug: Log the received data to check if userSection and costCenter are included
+    console.log("Received request data:", {
+      userSection: requestData.userSection,
+      costCenter: requestData.costCenter,
+      vehicleNumber: requestData.vehicleNumber,
+    });
+
     // Convert numeric fields from string to number
     requestData.vehicleId = Number(requestData.vehicleId);
     requestData.quantity = Number(requestData.quantity);
@@ -37,6 +44,8 @@ exports.createRequest = async (req, res) => {
       "presentKmReading",
       "previousKmReading",
       "tireWearPattern",
+      "userSection",
+      "costCenter",
     ];
     for (const field of requiredFields) {
       if (

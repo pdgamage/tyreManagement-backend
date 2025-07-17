@@ -109,6 +109,17 @@ const Request = sequelize.define(
       allowNull: true,
       defaultValue: false,
     },
+    // Department and Cost Center fields
+    userSection: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'Department', // Maps to the Department column in database
+    },
+    costCenter: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'CostCenter', // Maps to the CostCenter column in database
+    },
   },
   {
     tableName: "requests",
