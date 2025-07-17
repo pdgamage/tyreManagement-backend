@@ -15,6 +15,7 @@ require("./models/User");
 require("./models/Vehicle");
 require("./models/Request");
 require("./models/RequestImage");
+require("./models/TireDetails");
 
 // Test database connection
 async function testDbConnection() {
