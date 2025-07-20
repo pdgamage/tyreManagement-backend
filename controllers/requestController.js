@@ -78,6 +78,53 @@ exports.createRequest = async (req, res) => {
       // Note: Leading zeros are automatically removed on frontend
     }
 
+    // Check for duplicate/recent requests for the same vehicle
+    const existingRequests = await Request.findAll({
+      where: {
+        vehicleNumber: requestData.vehicleNumber,
+        status: {
+          [require('sequelize').Op.notIn]: ['rejected', 'complete', 'order placed']
+        }
+      },
+      order: [['submittedAt', 'DESC']]
+    });
+
+    // Check for pending requests
+    if (existingRequests.length > 0) {
+      return res.status(400).json({
+        error: `Vehicle ${requestData.vehicleNumber} already has a pending tire request. Please wait for the current request to be processed before submitting a new one.`,
+        existingRequestId: existingRequests[0].id,
+        existingRequestStatus: existingRequests[0].status
+      });
+    }
+
+    // Check for recent completed requests (within 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentCompletedRequests = await Request.findAll({
+      where: {
+        vehicleNumber: requestData.vehicleNumber,
+        status: {
+          [require('sequelize').Op.in]: ['complete', 'order placed']
+        },
+        submittedAt: {
+          [require('sequelize').Op.gte]: thirtyDaysAgo
+        }
+      },
+      order: [['submittedAt', 'DESC']]
+    });
+
+    if (recentCompletedRequests.length > 0) {
+      const lastRequest = recentCompletedRequests[0];
+      const daysSinceLastRequest = Math.ceil((new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24));
+      return res.status(400).json({
+        error: `Vehicle ${requestData.vehicleNumber} had a tire request completed ${daysSinceLastRequest} days ago. Please wait at least 30 days between tire requests for the same vehicle.`,
+        lastRequestDate: lastRequest.submittedAt,
+        daysRemaining: 30 - daysSinceLastRequest
+      });
+    }
+
     // 1. Create the request
     const result = await Request.create(requestData);
 
@@ -359,6 +406,76 @@ exports.getRequestsByUser = async (req, res) => {
     res.json(requestsWithImages);
   } catch (error) {
     console.error("Error fetching requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.checkVehicleRestrictions = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+
+    if (!vehicleNumber) {
+      return res.status(400).json({ error: "Vehicle number is required" });
+    }
+
+    // Check for pending requests
+    const existingRequests = await Request.findAll({
+      where: {
+        vehicleNumber: vehicleNumber,
+        status: {
+          [require('sequelize').Op.notIn]: ['rejected', 'complete', 'order placed']
+        }
+      },
+      order: [['submittedAt', 'DESC']]
+    });
+
+    if (existingRequests.length > 0) {
+      return res.json({
+        restricted: true,
+        type: 'pending',
+        message: `Vehicle ${vehicleNumber} already has a pending tire request. Please wait for the current request to be processed before submitting a new one.`,
+        existingRequestId: existingRequests[0].id,
+        existingRequestStatus: existingRequests[0].status
+      });
+    }
+
+    // Check for recent completed requests (within 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentCompletedRequests = await Request.findAll({
+      where: {
+        vehicleNumber: vehicleNumber,
+        status: {
+          [require('sequelize').Op.in]: ['complete', 'order placed']
+        },
+        submittedAt: {
+          [require('sequelize').Op.gte]: thirtyDaysAgo
+        }
+      },
+      order: [['submittedAt', 'DESC']]
+    });
+
+    if (recentCompletedRequests.length > 0) {
+      const lastRequest = recentCompletedRequests[0];
+      const daysSinceLastRequest = Math.ceil((new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24));
+      return res.json({
+        restricted: true,
+        type: 'recent',
+        message: `Vehicle ${vehicleNumber} had a tire request completed ${daysSinceLastRequest} days ago. Please wait at least 30 days between tire requests for the same vehicle.`,
+        lastRequestDate: lastRequest.submittedAt,
+        daysRemaining: 30 - daysSinceLastRequest
+      });
+    }
+
+    // No restrictions found
+    res.json({
+      restricted: false,
+      message: "Vehicle is eligible for a new tire request"
+    });
+
+  } catch (error) {
+    console.error("Error checking vehicle restrictions:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
