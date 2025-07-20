@@ -52,22 +52,6 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    // Additional validation for phone number (9-10 digits, first digit can be any digit 0-9)
-    if (requestData.requesterPhone) {
-      const phoneDigits = requestData.requesterPhone.replace(/\D/g, '');
-      if (phoneDigits.length < 9 || phoneDigits.length > 10) {
-        return res
-          .status(400)
-          .json({ error: "Phone number must be between 9-10 digits" });
-      }
-      if (!/^\d{9,10}$/.test(phoneDigits)) {
-        return res
-          .status(400)
-          .json({ error: "Phone number must contain only digits (9-10 digits)" });
-      }
-      // Note: First digit can be any digit (0-9), zero is not required
-    }
-
     // 1. Create the request
     const result = await Request.create(requestData);
 
