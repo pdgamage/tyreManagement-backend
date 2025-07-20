@@ -480,6 +480,50 @@ exports.checkVehicleRestrictions = async (req, res) => {
   }
 };
 
+exports.cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cancelReason } = req.body;
+
+    console.log(`Cancelling order for request ${id}`);
+
+    // Get the request details
+    const request = await Request.findByPk(id);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if request can be cancelled (must be "order placed" status)
+    if (request.status !== "order placed") {
+      return res.status(400).json({
+        error: "Only orders with 'order placed' status can be cancelled",
+        currentStatus: request.status,
+      });
+    }
+
+    // Update request status to cancelled with reason
+    await request.update({
+      status: "cancelled",
+      customer_officer_note: cancelReason || "Order cancelled by customer officer",
+      updatedAt: new Date(),
+    });
+
+    console.log(`Order cancelled successfully for request ${id}`);
+
+    res.json({
+      message: "Order cancelled successfully",
+      request: {
+        id: request.id,
+        status: "cancelled",
+        cancelReason: cancelReason || "Order cancelled by customer officer",
+      },
+    });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
