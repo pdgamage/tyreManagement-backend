@@ -41,6 +41,9 @@ router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicl
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
+// Cancel order - only for customer officers
+router.post("/:id/cancel-order", requestController.cancelOrder);
+
 // Delete a request
 router.delete("/requests/:id", requestController.deleteRequest);
 

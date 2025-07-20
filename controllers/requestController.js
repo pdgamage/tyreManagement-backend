@@ -213,6 +213,7 @@ exports.updateRequestStatus = async (req, res) => {
       "rejected",
       "complete",
       "order placed",
+      "cancelled",
     ];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
@@ -640,5 +641,65 @@ exports.deleteRequest = async (req, res) => {
   } catch (error) {
     console.error("Error deleting request:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Cancel order - only for customer officers
+exports.cancelOrder = async (req, res) => {
+  try {
+    const { role, userId, notes } = req.body;
+    const requestId = req.params.id;
+
+    // Validate that only customer officers can cancel orders
+    if (role !== "customer-officer") {
+      return res.status(403).json({
+        error: "Only customer officers can cancel orders"
+      });
+    }
+
+    // Find the request
+    const request = await Request.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if the request can be cancelled (must be complete or order placed)
+    if (!["complete", "order placed"].includes(request.status)) {
+      return res.status(400).json({
+        error: "Only completed or placed orders can be cancelled"
+      });
+    }
+
+    // Update the request status to cancelled
+    request.status = "cancelled";
+    request.customer_officer_note = notes || "Order cancelled by customer officer";
+    if (userId) {
+      request.customer_officer_decision_by = userId;
+    }
+
+    try {
+      await request.save();
+      console.log("Request cancelled successfully with Sequelize");
+    } catch (sequelizeError) {
+      console.log("Sequelize save failed, trying raw SQL:", sequelizeError.message);
+
+      // Fallback to raw SQL update
+      await pool.query(
+        "UPDATE requests SET status = ?, customer_officer_note = ?, customer_officer_decision_by = ? WHERE id = ?",
+        ["cancelled", notes || "Order cancelled by customer officer", userId, requestId]
+      );
+      console.log("Request cancelled successfully with raw SQL");
+    }
+
+    // Fetch the updated request
+    const updatedRequest = await Request.findByPk(requestId);
+
+    res.json({
+      message: "Order cancelled successfully",
+      request: updatedRequest,
+    });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ error: "Failed to cancel order" });
   }
 };
