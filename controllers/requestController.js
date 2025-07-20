@@ -52,6 +52,32 @@ exports.createRequest = async (req, res) => {
       }
     }
 
+    // Additional validation for phone number (max 10 digits, no leading zeros)
+    if (requestData.requesterPhone) {
+      const phoneDigits = requestData.requesterPhone.replace(/\D/g, '');
+      if (phoneDigits.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Phone number is required" });
+      }
+      if (phoneDigits.length > 10) {
+        return res
+          .status(400)
+          .json({ error: "Phone number cannot exceed 10 digits" });
+      }
+      if (phoneDigits.startsWith('0')) {
+        return res
+          .status(400)
+          .json({ error: "Phone number cannot start with zero" });
+      }
+      if (!/^\d+$/.test(phoneDigits)) {
+        return res
+          .status(400)
+          .json({ error: "Phone number must contain only digits" });
+      }
+      // Note: Leading zeros are automatically removed on frontend
+    }
+
     // 1. Create the request
     const result = await Request.create(requestData);
 
