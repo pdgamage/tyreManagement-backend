@@ -34,8 +34,7 @@ const Request = sequelize.define(
         "approved",
         "rejected",
         "complete",
-        "order placed",
-        "cancelled"
+        "order placed"
       ),
       defaultValue: "pending",
     },
