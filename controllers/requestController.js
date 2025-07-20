@@ -52,6 +52,21 @@ exports.createRequest = async (req, res) => {
       }
     }
 
+    // Additional validation for phone number
+    if (requestData.requesterPhone) {
+      const phoneDigits = requestData.requesterPhone.replace(/\D/g, '');
+      if (phoneDigits.length < 9 || phoneDigits.length > 10) {
+        return res
+          .status(400)
+          .json({ error: "Phone number must be between 9-10 digits" });
+      }
+      if (!/^\d+$/.test(phoneDigits)) {
+        return res
+          .status(400)
+          .json({ error: "Phone number must contain only digits" });
+      }
+    }
+
     // 1. Create the request
     const result = await Request.create(requestData);
 
