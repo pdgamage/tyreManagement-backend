@@ -213,6 +213,7 @@ exports.updateRequestStatus = async (req, res) => {
       "rejected",
       "complete",
       "order placed",
+      "order cancelled",
     ];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
