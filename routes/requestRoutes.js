@@ -42,6 +42,6 @@ router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicl
 router.post("/:id/place-order", requestController.placeOrder);
 
 // Delete a request
-router.delete("/requests/:id", requestController.deleteRequest);
+router.delete("/:id", requestController.deleteRequest);
 
 module.exports = router;
