@@ -211,6 +211,10 @@ exports.updateRequestStatus = async (req, res) => {
       "customer-officer approved",
       "approved",
       "rejected",
+      "supervisor rejected",
+      "technical-manager rejected",
+      "engineer rejected",
+      "customer-officer rejected",
       "complete",
       "order placed",
       "order cancelled",
@@ -238,7 +242,7 @@ exports.updateRequestStatus = async (req, res) => {
     // Save notes to the correct column
     if (
       status === "supervisor approved" ||
-      (status === "rejected" && role === "supervisor")
+      status === "supervisor rejected"
     ) {
       request.supervisor_notes = notes;
       // Store the supervisor ID who made the decision
@@ -248,39 +252,30 @@ exports.updateRequestStatus = async (req, res) => {
     }
     if (
       status === "technical-manager approved" ||
-      (status === "rejected" && role === "technical-manager")
+      status === "technical-manager rejected"
     ) {
       request.technical_manager_note = notes;
       // Store the technical manager ID who made the decision
       if (userId) {
         request.technical_manager_id = userId;
       }
-      // If technical manager rejects, clear supervisor decision tracking
-      if (status === "rejected" && role === "technical-manager") {
-        request.supervisor_decision_by = null;
-      }
     }
     if (
       status === "engineer approved" ||
       status === "complete" ||
-      (status === "rejected" && role === "engineer")
+      status === "engineer rejected"
     ) {
       request.engineer_note = notes;
       // Store the engineer ID who made the decision
       if (userId) {
         request.engineer_decision_by = userId;
       }
-      // If engineer rejects, clear previous decision tracking
-      if (status === "rejected" && role === "engineer") {
-        request.supervisor_decision_by = null;
-        request.technical_manager_id = null;
-      }
     }
     if (
       status === "customer-officer approved" ||
       status === "order placed" ||
       status === "order cancelled" ||
-      (status === "rejected" && role === "customer-officer")
+      status === "customer-officer rejected"
     ) {
       request.customer_officer_note = notes;
       // Store the customer officer ID who made the decision
@@ -313,16 +308,14 @@ exports.updateRequestStatus = async (req, res) => {
 
       if (
         status === "supervisor approved" ||
-        (status === "rejected" && req.body.role === "supervisor")
+        status === "supervisor rejected"
       ) {
         updateQuery += ", supervisor_notes = ?";
         params.push(notes);
       }
       if (
         status === "technical-manager approved" ||
-        (status === "rejected" &&
-          (req.body.role === "technical-manager" ||
-            req.body.role === "technical - manager"))
+        status === "technical-manager rejected"
       ) {
         updateQuery += ", technical_manager_note = ?";
         params.push(notes);
@@ -330,7 +323,7 @@ exports.updateRequestStatus = async (req, res) => {
       if (
         status === "engineer approved" ||
         status === "complete" ||
-        (status === "rejected" && req.body.role === "engineer")
+        status === "engineer rejected"
       ) {
         updateQuery += ", engineer_note = ?";
         params.push(notes);
@@ -339,7 +332,7 @@ exports.updateRequestStatus = async (req, res) => {
         status === "customer-officer approved" ||
         status === "order placed" ||
         status === "order cancelled" ||
-        (status === "rejected" && req.body.role === "customer-officer")
+        status === "customer-officer rejected"
       ) {
         updateQuery += ", customer_officer_note = ?";
         params.push(notes);
