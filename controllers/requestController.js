@@ -279,6 +279,7 @@ exports.updateRequestStatus = async (req, res) => {
     if (
       status === "customer-officer approved" ||
       status === "order placed" ||
+      status === "order cancelled" ||
       (status === "rejected" && role === "customer-officer")
     ) {
       request.customer_officer_note = notes;
@@ -337,6 +338,7 @@ exports.updateRequestStatus = async (req, res) => {
       if (
         status === "customer-officer approved" ||
         status === "order placed" ||
+        status === "order cancelled" ||
         (status === "rejected" && req.body.role === "customer-officer")
       ) {
         updateQuery += ", customer_officer_note = ?";
