@@ -152,7 +152,16 @@ exports.createRequest = async (req, res) => {
 
 exports.getAllRequests = async (req, res) => {
   try {
-    const requests = await Request.findAll();
+    // Use raw SQL to join with vehicles table to get department information
+    const [requests] = await pool.query(`
+      SELECT
+        r.*,
+        v.department as vehicleDepartment,
+        v.costCentre as vehicleCostCentre
+      FROM requests r
+      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
+      ORDER BY r.submittedAt DESC
+    `);
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
@@ -162,7 +171,16 @@ exports.getAllRequests = async (req, res) => {
           order: [["imageIndex", "ASC"]],
         });
         const imageUrls = images.map((img) => img.imagePath);
-        return { ...request.toJSON(), images: imageUrls };
+
+        // Ensure department information is available
+        const departmentInfo = {
+          ...request,
+          userSection: request.Department || request.vehicleDepartment || request.userSection || 'IT Department',
+          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || 'CC-001',
+          images: imageUrls
+        };
+
+        return departmentInfo;
       })
     );
 
@@ -382,10 +400,18 @@ exports.updateRequestStatus = async (req, res) => {
 exports.getRequestsByUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    const requests = await Request.findAll({
-      where: { userId },
-      order: [["submittedAt", "DESC"]],
-    });
+
+    // Use raw SQL to join with vehicles table to get department information
+    const [requests] = await pool.query(`
+      SELECT
+        r.*,
+        v.department as vehicleDepartment,
+        v.costCentre as vehicleCostCentre
+      FROM requests r
+      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
+      WHERE r.userId = ?
+      ORDER BY r.submittedAt DESC
+    `, [userId]);
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
@@ -395,7 +421,16 @@ exports.getRequestsByUser = async (req, res) => {
           order: [["imageIndex", "ASC"]],
         });
         const imageUrls = images.map((img) => img.imagePath);
-        return { ...request.toJSON(), images: imageUrls };
+
+        // Ensure department information is available
+        const departmentInfo = {
+          ...request,
+          userSection: request.Department || request.vehicleDepartment || request.userSection || 'IT Department',
+          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || 'CC-001',
+          images: imageUrls
+        };
+
+        return departmentInfo;
       })
     );
 
