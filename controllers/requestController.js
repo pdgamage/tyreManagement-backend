@@ -172,11 +172,11 @@ exports.getAllRequests = async (req, res) => {
         });
         const imageUrls = images.map((img) => img.imagePath);
 
-        // Ensure department information is available
+        // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || 'IT Department',
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || 'CC-001',
+          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
+          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
           images: imageUrls
         };
 
@@ -422,11 +422,11 @@ exports.getRequestsByUser = async (req, res) => {
         });
         const imageUrls = images.map((img) => img.imagePath);
 
-        // Ensure department information is available
+        // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || 'IT Department',
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || 'CC-001',
+          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
+          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
           images: imageUrls
         };
 
