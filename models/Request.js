@@ -90,19 +90,19 @@ const Request = sequelize.define(
     },
     // New delivery and pricing fields
     deliveryOfficeName: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     deliveryStreetName: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     deliveryTown: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     totalPrice: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     warrantyDistance: {
@@ -116,14 +116,27 @@ const Request = sequelize.define(
     },
     // Department and Cost Center fields
     userSection: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: true,
-      field: 'Department', // Maps to the Department column in database
+      field: "Department", // Maps to the Department column in database
     },
     costCenter: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: true,
-      field: 'CostCenter', // Maps to the CostCenter column in database
+      field: "CostCenter", // Maps to the CostCenter column in database
+    },
+    // Order related fields
+    order_placed: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    order_timestamp: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    order_status: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {
