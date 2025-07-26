@@ -660,6 +660,170 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
+exports.updateRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const requestData = req.body;
+
+    // Find the existing request
+    const existingRequest = await Request.findByPk(requestId);
+    if (!existingRequest) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if request is in pending status (only pending requests can be edited)
+    if (existingRequest.status !== "pending") {
+      return res.status(400).json({
+        error: "Only pending requests can be edited",
+        currentStatus: existingRequest.status
+      });
+    }
+
+    // Convert numeric fields from string to number if they exist
+    if (requestData.vehicleId) requestData.vehicleId = Number(requestData.vehicleId);
+    if (requestData.quantity) requestData.quantity = Number(requestData.quantity);
+    if (requestData.tubesQuantity) requestData.tubesQuantity = Number(requestData.tubesQuantity);
+    if (requestData.presentKmReading) requestData.presentKmReading = Number(requestData.presentKmReading);
+    if (requestData.previousKmReading) requestData.previousKmReading = Number(requestData.previousKmReading);
+    if (requestData.userId) requestData.userId = Number(requestData.userId);
+
+    // Validate required fields if they are being updated
+    const requiredFields = [
+      "vehicleNumber",
+      "quantity",
+      "tubesQuantity",
+      "tireSize",
+      "requestReason",
+      "requesterName",
+      "requesterEmail",
+      "requesterPhone",
+      "vehicleBrand",
+      "vehicleModel",
+      "lastReplacementDate",
+      "existingTireMake",
+      "tireSizeRequired",
+      "presentKmReading",
+      "previousKmReading",
+      "tireWearPattern",
+      "userSection",
+      "costCenter",
+    ];
+
+    for (const field of requiredFields) {
+      const value = requestData[field] !== undefined ? requestData[field] : existingRequest[field];
+      if (value === undefined || value === null || value === "") {
+        return res.status(400).json({ error: `Missing required field: ${field}` });
+      }
+    }
+
+    // Additional validation for phone number if it's being updated
+    if (requestData.requesterPhone) {
+      const phoneDigits = requestData.requesterPhone.replace(/\D/g, '');
+      if (phoneDigits.length === 0) {
+        return res.status(400).json({ error: "Phone number is required" });
+      }
+      if (phoneDigits.length > 10) {
+        return res.status(400).json({ error: "Phone number cannot exceed 10 digits" });
+      }
+      if (phoneDigits.startsWith('0')) {
+        return res.status(400).json({ error: "Phone number cannot start with zero" });
+      }
+      if (!/^\d+$/.test(phoneDigits)) {
+        return res.status(400).json({ error: "Phone number must contain only digits" });
+      }
+    }
+
+    // Check for duplicate/recent requests for the same vehicle (if vehicle number is being changed)
+    if (requestData.vehicleNumber && requestData.vehicleNumber !== existingRequest.vehicleNumber) {
+      const existingRequests = await Request.findAll({
+        where: {
+          vehicleNumber: requestData.vehicleNumber,
+          status: {
+            [require('sequelize').Op.notIn]: ['rejected', 'complete', 'order placed']
+          },
+          id: {
+            [require('sequelize').Op.ne]: requestId // Exclude current request
+          }
+        },
+        order: [['submittedAt', 'DESC']]
+      });
+
+      if (existingRequests.length > 0) {
+        return res.status(400).json({
+          error: `Vehicle ${requestData.vehicleNumber} already has a pending tire request. Please wait for the current request to be processed before submitting a new one.`,
+          existingRequestId: existingRequests[0].id,
+          existingRequestStatus: existingRequests[0].status
+        });
+      }
+
+      // Check for recent completed requests (within 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentCompletedRequests = await Request.findAll({
+        where: {
+          vehicleNumber: requestData.vehicleNumber,
+          status: {
+            [require('sequelize').Op.in]: ['complete', 'order placed']
+          },
+          submittedAt: {
+            [require('sequelize').Op.gte]: thirtyDaysAgo
+          }
+        },
+        order: [['submittedAt', 'DESC']]
+      });
+
+      if (recentCompletedRequests.length > 0) {
+        const lastRequest = recentCompletedRequests[0];
+        const daysSinceLastRequest = Math.ceil((new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24));
+        return res.status(400).json({
+          error: `Vehicle ${requestData.vehicleNumber} had a tire request completed ${daysSinceLastRequest} days ago. Please wait at least 30 days between tire requests for the same vehicle.`,
+          lastRequestDate: lastRequest.submittedAt,
+          daysRemaining: 30 - daysSinceLastRequest
+        });
+      }
+    }
+
+    // Update the request
+    await existingRequest.update(requestData);
+
+    // Handle image updates if provided
+    if (Array.isArray(requestData.images)) {
+      // Delete existing images
+      await RequestImage.destroy({ where: { requestId: requestId } });
+
+      // Save new image URLs
+      for (let i = 0; i < requestData.images.length; i++) {
+        const imageUrl = requestData.images[i];
+        if (imageUrl) {
+          await RequestImage.create({
+            requestId: requestId,
+            imagePath: imageUrl,
+            imageIndex: i,
+          });
+        }
+      }
+    }
+
+    // Fetch the updated request with images
+    const updatedRequest = await Request.findByPk(requestId);
+    const images = await RequestImage.findAll({
+      where: { requestId: requestId },
+      order: [["imageIndex", "ASC"]],
+    });
+    const imageUrls = images.map((img) => img.imagePath);
+
+    res.json({
+      ...updatedRequest.toJSON(),
+      images: imageUrls,
+      message: "Request updated successfully"
+    });
+  } catch (err) {
+    console.error("Error updating tire request:", err);
+    res.status(500).json({ error: "Failed to update tire request" });
+  }
+};
+
 exports.deleteRequest = async (req, res) => {
   try {
     const id = req.params.id;
