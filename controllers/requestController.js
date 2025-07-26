@@ -683,12 +683,14 @@ exports.updateRequest = async (req, res) => {
       });
     }
 
+    // Log the incoming data for debugging
+    console.log("Update request data:", JSON.stringify(requestData, null, 2));
+
     // Validate required fields
     const requiredFields = [
       "vehicleNumber",
       "quantity",
       "tubesQuantity",
-      "tireSize",
       "requestReason",
       "requesterName",
       "requesterEmail",
@@ -711,6 +713,7 @@ exports.updateRequest = async (req, res) => {
         requestData[field] === null ||
         requestData[field] === ""
       ) {
+        console.log(`Missing required field: ${field}, value:`, requestData[field]);
         return res
           .status(400)
           .json({ error: `Missing required field: ${field}` });
@@ -720,6 +723,7 @@ exports.updateRequest = async (req, res) => {
     // Update the request
     const updateQuery = `
       UPDATE requests SET
+        vehicleId = ?,
         vehicleNumber = ?,
         quantity = ?,
         tubesQuantity = ?,
@@ -744,15 +748,17 @@ exports.updateRequest = async (req, res) => {
         deliveryTown = ?,
         totalPrice = ?,
         warrantyDistance = ?,
-        tireWearIndicatorAppeared = ?
+        tireWearIndicatorAppeared = ?,
+        supervisorId = ?
       WHERE id = ?
     `;
 
     const updateParams = [
+      requestData.vehicleId || null,
       requestData.vehicleNumber,
       requestData.quantity,
       requestData.tubesQuantity,
-      requestData.tireSize,
+      requestData.tireSizeRequired, // Use tireSizeRequired for tireSize
       requestData.requestReason,
       requestData.requesterName,
       requestData.requesterEmail,
@@ -774,13 +780,17 @@ exports.updateRequest = async (req, res) => {
       requestData.totalPrice || null,
       requestData.warrantyDistance || null,
       requestData.tireWearIndicatorAppeared || false,
+      requestData.supervisorId || null,
       id
     ];
 
-    await pool.query(updateQuery, updateParams);
+    console.log("Executing update query with params:", updateParams);
+    const [result] = await pool.query(updateQuery, updateParams);
+    console.log("Update result:", result);
 
     // Handle image updates if provided
     if (requestData.images && Array.isArray(requestData.images)) {
+      console.log("Updating images:", requestData.images);
       // Delete existing images
       await pool.query("DELETE FROM request_images WHERE requestId = ?", [id]);
 
@@ -801,13 +811,19 @@ exports.updateRequest = async (req, res) => {
       [id]
     );
 
+    console.log("Request updated successfully");
     res.json({
       message: "Request updated successfully",
       request: updatedRequest[0],
     });
   } catch (error) {
     console.error("Error updating request:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error stack:", error.stack);
+    console.error("SQL Error:", error.sql);
+    res.status(500).json({
+      error: "Internal server error",
+      details: error.message
+    });
   }
 };
 
