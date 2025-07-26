@@ -662,8 +662,16 @@ exports.placeOrder = async (req, res) => {
 
 exports.updateRequest = async (req, res) => {
   try {
+    console.log("updateRequest called with ID:", req.params.id);
+    console.log("Request body:", req.body);
+
     const requestId = req.params.id;
     const requestData = req.body;
+
+    // Validate requestId
+    if (!requestId || isNaN(requestId)) {
+      return res.status(400).json({ error: "Invalid request ID" });
+    }
 
     // Find the existing request
     const existingRequest = await Request.findByPk(requestId);
@@ -820,7 +828,15 @@ exports.updateRequest = async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating tire request:", err);
-    res.status(500).json({ error: "Failed to update tire request" });
+    console.error("Error details:", {
+      message: err.message,
+      stack: err.stack,
+      sql: err.sql,
+    });
+    res.status(500).json({
+      error: "Failed to update tire request",
+      details: err.message
+    });
   }
 };
 
