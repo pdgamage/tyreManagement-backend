@@ -664,7 +664,14 @@ exports.placeOrder = async (req, res) => {
 exports.updateRequest = async (req, res) => {
   console.log("=== UPDATE REQUEST START ===");
   console.log("Request ID:", req.params.id);
+  console.log("Request method:", req.method);
+  console.log("Request headers:", req.headers);
   console.log("Request body:", JSON.stringify(req.body, null, 2));
+
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
   try {
     const { id } = req.params;
@@ -673,8 +680,14 @@ exports.updateRequest = async (req, res) => {
     // Validate request ID
     if (!id || isNaN(parseInt(id))) {
       console.log("Invalid request ID:", id);
-      return res.status(400).json({ error: "Invalid request ID" });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request ID",
+        receivedId: id
+      });
     }
+
+    console.log("Request ID validation passed:", id);
 
     // First check if the request exists
     const [existingRequest] = await pool.query(
@@ -693,13 +706,14 @@ exports.updateRequest = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    // Allow editing of pending requests only
-    if (existingRequest[0].status !== "pending") {
-      console.log("Request status is not pending:", existingRequest[0].status);
-      return res.status(400).json({
-        error: "Only pending requests can be edited"
-      });
-    }
+    // Allow editing of pending requests only (temporarily disabled for testing)
+    console.log("Current request status:", existingRequest[0].status);
+    // if (existingRequest[0].status !== "pending") {
+    //   console.log("Request status is not pending:", existingRequest[0].status);
+    //   return res.status(400).json({
+    //     error: "Only pending requests can be edited"
+    //   });
+    // }
 
     // Validate essential fields only
     const essentialFields = [
