@@ -26,23 +26,20 @@ router.post("/requests", requestController.createRequest);
 // Get all requests
 router.get("/", requestController.getAllRequests);
 
-// Get requests by user (more specific route first)
-router.get("/user/:id", requestController.getRequestsByUser);
-
-// Check vehicle request restrictions (more specific route first)
-router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicleRestrictions);
-
-// Update request status (more specific route first)
-router.put("/:id/status", requestController.updateRequestStatus);
-
-// Place order for an approved request (more specific route first)
-router.post("/:id/place-order", requestController.placeOrder);
-
-// Update request details (only for pending requests)
-router.put("/:id", requestController.updateRequest);
-
 // Get a single request
 router.get("/:id", requestController.getRequestById);
+
+// Update request status
+router.put("/:id/status", requestController.updateRequestStatus);
+
+// Get requests by user
+router.get("/user/:id", requestController.getRequestsByUser);
+
+// Check vehicle request restrictions
+router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicleRestrictions);
+
+// Place order for an approved request
+router.post("/:id/place-order", requestController.placeOrder);
 
 // Delete a request
 router.delete("/:id", requestController.deleteRequest);
