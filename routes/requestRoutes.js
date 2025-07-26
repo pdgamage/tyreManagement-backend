@@ -32,17 +32,6 @@ router.get("/:id", requestController.getRequestById);
 // Update request status
 router.put("/:id/status", requestController.updateRequestStatus);
 
-// Test endpoint
-router.get("/test/:id", (req, res) => {
-  console.log("Test endpoint hit for ID:", req.params.id);
-  res.json({
-    success: true,
-    message: "Test endpoint working",
-    id: req.params.id,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Update a request (for editing pending requests)
 router.put("/:id", requestController.updateRequest);
 
