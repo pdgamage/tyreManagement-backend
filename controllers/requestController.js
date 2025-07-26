@@ -662,75 +662,75 @@ exports.placeOrder = async (req, res) => {
 
 // Update a request (for editing pending requests)
 exports.updateRequest = async (req, res) => {
+  console.log("=== UPDATE REQUEST START ===");
+  console.log("Request ID:", req.params.id);
+  console.log("Request body:", JSON.stringify(req.body, null, 2));
+
   try {
     const { id } = req.params;
     const requestData = req.body;
 
-    // First check if the request exists and is in pending status
+    // Validate request ID
+    if (!id || isNaN(parseInt(id))) {
+      console.log("Invalid request ID:", id);
+      return res.status(400).json({ error: "Invalid request ID" });
+    }
+
+    // First check if the request exists
     const [existingRequest] = await pool.query(
       "SELECT * FROM requests WHERE id = ?",
-      [id]
+      [parseInt(id)]
     );
 
     console.log("Existing request found:", existingRequest.length > 0);
     if (existingRequest.length > 0) {
       console.log("Request status:", existingRequest[0].status);
+      console.log("Request user ID:", existingRequest[0].userId);
     }
 
     if (existingRequest.length === 0) {
+      console.log("Request not found for ID:", id);
       return res.status(404).json({ error: "Request not found" });
     }
 
-    // Allow editing of pending requests (remove strict status check for now)
-    // if (existingRequest[0].status !== "pending") {
-    //   return res.status(400).json({
-    //     error: "Only pending requests can be edited"
-    //   });
-    // }
+    // Allow editing of pending requests only
+    if (existingRequest[0].status !== "pending") {
+      console.log("Request status is not pending:", existingRequest[0].status);
+      return res.status(400).json({
+        error: "Only pending requests can be edited"
+      });
+    }
 
-    // Log the incoming data for debugging
-    console.log("Update request data:", JSON.stringify(requestData, null, 2));
-
-    // Validate required fields
-    const requiredFields = [
+    // Validate essential fields only
+    const essentialFields = [
       "vehicleNumber",
       "quantity",
-      "tubesQuantity",
       "requestReason",
       "requesterName",
       "requesterEmail",
       "requesterPhone",
-      "vehicleBrand",
-      "vehicleModel",
-      "lastReplacementDate",
-      "existingTireMake",
-      "tireSizeRequired",
-      "presentKmReading",
-      "previousKmReading",
-      "tireWearPattern",
-      "userSection",
-      "costCenter",
+      "tireSizeRequired"
     ];
 
-    for (const field of requiredFields) {
+    for (const field of essentialFields) {
       const value = requestData[field];
       if (
         value === undefined ||
         value === null ||
         (typeof value === 'string' && value.trim() === "")
       ) {
-        console.log(`Missing required field: ${field}, value:`, value);
+        console.log(`Missing essential field: ${field}, value:`, value);
         return res
           .status(400)
           .json({ error: `Missing required field: ${field}` });
       }
     }
 
-    // Update the request
+    console.log("All essential fields validated successfully");
+
+    // Update the request with essential fields only
     const updateQuery = `
       UPDATE requests SET
-        userId = ?,
-        vehicleId = ?,
         vehicleNumber = ?,
         quantity = ?,
         tubesQuantity = ?,
@@ -755,55 +755,57 @@ exports.updateRequest = async (req, res) => {
         deliveryTown = ?,
         totalPrice = ?,
         warrantyDistance = ?,
-        tireWearIndicatorAppeared = ?,
-        supervisorId = ?
+        tireWearIndicatorAppeared = ?
       WHERE id = ?
     `;
 
     const updateParams = [
-      existingRequest[0].userId, // Keep the original userId
-      requestData.vehicleId ? parseInt(requestData.vehicleId) : existingRequest[0].vehicleId,
-      requestData.vehicleNumber,
-      parseInt(requestData.quantity) || 1,
-      parseInt(requestData.tubesQuantity) || 0,
-      requestData.tireSizeRequired, // Use tireSizeRequired for tireSize
-      requestData.requestReason,
-      requestData.requesterName,
-      requestData.requesterEmail,
-      requestData.requesterPhone,
-      requestData.vehicleBrand,
-      requestData.vehicleModel,
-      requestData.lastReplacementDate,
-      requestData.existingTireMake,
-      requestData.tireSizeRequired,
-      parseInt(requestData.presentKmReading) || 0,
-      parseInt(requestData.previousKmReading) || 0,
-      requestData.tireWearPattern,
-      requestData.comments || null,
-      requestData.userSection,
-      requestData.costCenter,
-      requestData.deliveryOfficeName || null,
-      requestData.deliveryStreetName || null,
-      requestData.deliveryTown || null,
-      requestData.totalPrice ? parseFloat(requestData.totalPrice) : null,
-      requestData.warrantyDistance ? parseInt(requestData.warrantyDistance) : null,
-      requestData.tireWearIndicatorAppeared || false,
-      requestData.supervisorId ? parseInt(requestData.supervisorId) : null,
-      id
+      requestData.vehicleNumber || existingRequest[0].vehicleNumber,
+      parseInt(requestData.quantity) || existingRequest[0].quantity,
+      parseInt(requestData.tubesQuantity) || existingRequest[0].tubesQuantity,
+      requestData.tireSizeRequired || existingRequest[0].tireSize,
+      requestData.requestReason || existingRequest[0].requestReason,
+      requestData.requesterName || existingRequest[0].requesterName,
+      requestData.requesterEmail || existingRequest[0].requesterEmail,
+      requestData.requesterPhone || existingRequest[0].requesterPhone,
+      requestData.vehicleBrand || existingRequest[0].vehicleBrand,
+      requestData.vehicleModel || existingRequest[0].vehicleModel,
+      requestData.lastReplacementDate || existingRequest[0].lastReplacementDate,
+      requestData.existingTireMake || existingRequest[0].existingTireMake,
+      requestData.tireSizeRequired || existingRequest[0].tireSizeRequired,
+      parseInt(requestData.presentKmReading) || existingRequest[0].presentKmReading,
+      parseInt(requestData.previousKmReading) || existingRequest[0].previousKmReading,
+      requestData.tireWearPattern || existingRequest[0].tireWearPattern,
+      requestData.comments || existingRequest[0].comments,
+      requestData.userSection || existingRequest[0].Department,
+      requestData.costCenter || existingRequest[0].CostCenter,
+      requestData.deliveryOfficeName || existingRequest[0].deliveryOfficeName,
+      requestData.deliveryStreetName || existingRequest[0].deliveryStreetName,
+      requestData.deliveryTown || existingRequest[0].deliveryTown,
+      requestData.totalPrice ? parseFloat(requestData.totalPrice) : existingRequest[0].totalPrice,
+      requestData.warrantyDistance ? parseInt(requestData.warrantyDistance) : existingRequest[0].warrantyDistance,
+      requestData.tireWearIndicatorAppeared !== undefined ? requestData.tireWearIndicatorAppeared : existingRequest[0].tireWearIndicatorAppeared,
+      parseInt(id)
     ];
 
-    console.log("Executing update query with params:", updateParams);
-    console.log("Update query:", updateQuery);
+    console.log("Update parameters:", updateParams);
+
+    console.log("Executing update query...");
 
     try {
       const [result] = await pool.query(updateQuery, updateParams);
       console.log("Update result:", result);
 
       if (result.affectedRows === 0) {
+        console.log("No rows affected during update");
         return res.status(404).json({ error: "Request not found or no changes made" });
       }
+
+      console.log("Update successful, affected rows:", result.affectedRows);
     } catch (sqlError) {
       console.error("SQL Error during update:", sqlError);
+      console.error("SQL Query:", updateQuery);
+      console.error("SQL Params:", updateParams);
       return res.status(500).json({
         error: "Database update failed",
         details: sqlError.message
@@ -811,38 +813,42 @@ exports.updateRequest = async (req, res) => {
     }
 
     // Handle image updates if provided
-    if (requestData.images && Array.isArray(requestData.images)) {
-      console.log("Updating images:", requestData.images);
-      // Delete existing images
-      await pool.query("DELETE FROM request_images WHERE requestId = ?", [id]);
+    try {
+      if (requestData.images && Array.isArray(requestData.images)) {
+        console.log("Updating images:", requestData.images.length, "images");
+        // Delete existing images
+        await pool.query("DELETE FROM request_images WHERE requestId = ?", [parseInt(id)]);
 
-      // Insert new images
-      for (let i = 0; i < requestData.images.length; i++) {
-        if (requestData.images[i]) {
-          await pool.query(
-            "INSERT INTO request_images (requestId, imagePath, imageIndex) VALUES (?, ?, ?)",
-            [id, requestData.images[i], i]
-          );
+        // Insert new images
+        for (let i = 0; i < requestData.images.length; i++) {
+          if (requestData.images[i]) {
+            await pool.query(
+              "INSERT INTO request_images (requestId, imagePath, imageIndex) VALUES (?, ?, ?)",
+              [parseInt(id), requestData.images[i], i]
+            );
+          }
         }
+        console.log("Images updated successfully");
       }
+    } catch (imageError) {
+      console.error("Error updating images:", imageError);
+      // Don't fail the entire update if images fail
     }
 
-    // Fetch and return the updated request
-    const [updatedRequest] = await pool.query(
-      "SELECT * FROM requests WHERE id = ?",
-      [id]
-    );
-
-    console.log("Request updated successfully");
-    res.json({
+    console.log("=== UPDATE REQUEST SUCCESS ===");
+    res.status(200).json({
+      success: true,
       message: "Request updated successfully",
-      request: updatedRequest[0],
+      requestId: parseInt(id)
     });
+
   } catch (error) {
+    console.error("=== UPDATE REQUEST ERROR ===");
     console.error("Error updating request:", error);
     console.error("Error stack:", error.stack);
-    console.error("SQL Error:", error.sql);
+
     res.status(500).json({
+      success: false,
       error: "Internal server error",
       details: error.message
     });
