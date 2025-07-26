@@ -32,6 +32,9 @@ router.get("/:id", requestController.getRequestById);
 // Update request status
 router.put("/:id/status", requestController.updateRequestStatus);
 
+// Update request (for editing pending requests)
+router.put("/:id", upload.array("images", 7), requestController.updateRequest);
+
 // Get requests by user
 router.get("/user/:id", requestController.getRequestsByUser);
 
