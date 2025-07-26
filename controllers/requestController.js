@@ -660,6 +660,157 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
+// Update a request (for editing pending requests)
+exports.updateRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const requestData = req.body;
+
+    // First check if the request exists and is in pending status
+    const [existingRequest] = await pool.query(
+      "SELECT * FROM requests WHERE id = ?",
+      [id]
+    );
+
+    if (existingRequest.length === 0) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Only allow editing of pending requests
+    if (existingRequest[0].status !== "pending") {
+      return res.status(400).json({
+        error: "Only pending requests can be edited"
+      });
+    }
+
+    // Validate required fields
+    const requiredFields = [
+      "vehicleNumber",
+      "quantity",
+      "tubesQuantity",
+      "tireSize",
+      "requestReason",
+      "requesterName",
+      "requesterEmail",
+      "requesterPhone",
+      "vehicleBrand",
+      "vehicleModel",
+      "lastReplacementDate",
+      "existingTireMake",
+      "tireSizeRequired",
+      "presentKmReading",
+      "previousKmReading",
+      "tireWearPattern",
+      "userSection",
+      "costCenter",
+    ];
+
+    for (const field of requiredFields) {
+      if (
+        requestData[field] === undefined ||
+        requestData[field] === null ||
+        requestData[field] === ""
+      ) {
+        return res
+          .status(400)
+          .json({ error: `Missing required field: ${field}` });
+      }
+    }
+
+    // Update the request
+    const updateQuery = `
+      UPDATE requests SET
+        vehicleNumber = ?,
+        quantity = ?,
+        tubesQuantity = ?,
+        tireSize = ?,
+        requestReason = ?,
+        requesterName = ?,
+        requesterEmail = ?,
+        requesterPhone = ?,
+        vehicleBrand = ?,
+        vehicleModel = ?,
+        lastReplacementDate = ?,
+        existingTireMake = ?,
+        tireSizeRequired = ?,
+        presentKmReading = ?,
+        previousKmReading = ?,
+        tireWearPattern = ?,
+        comments = ?,
+        Department = ?,
+        CostCenter = ?,
+        deliveryOfficeName = ?,
+        deliveryStreetName = ?,
+        deliveryTown = ?,
+        totalPrice = ?,
+        warrantyDistance = ?,
+        tireWearIndicatorAppeared = ?
+      WHERE id = ?
+    `;
+
+    const updateParams = [
+      requestData.vehicleNumber,
+      requestData.quantity,
+      requestData.tubesQuantity,
+      requestData.tireSize,
+      requestData.requestReason,
+      requestData.requesterName,
+      requestData.requesterEmail,
+      requestData.requesterPhone,
+      requestData.vehicleBrand,
+      requestData.vehicleModel,
+      requestData.lastReplacementDate,
+      requestData.existingTireMake,
+      requestData.tireSizeRequired,
+      requestData.presentKmReading,
+      requestData.previousKmReading,
+      requestData.tireWearPattern,
+      requestData.comments || null,
+      requestData.userSection,
+      requestData.costCenter,
+      requestData.deliveryOfficeName || null,
+      requestData.deliveryStreetName || null,
+      requestData.deliveryTown || null,
+      requestData.totalPrice || null,
+      requestData.warrantyDistance || null,
+      requestData.tireWearIndicatorAppeared || false,
+      id
+    ];
+
+    await pool.query(updateQuery, updateParams);
+
+    // Handle image updates if provided
+    if (requestData.images && Array.isArray(requestData.images)) {
+      // Delete existing images
+      await pool.query("DELETE FROM request_images WHERE requestId = ?", [id]);
+
+      // Insert new images
+      for (let i = 0; i < requestData.images.length; i++) {
+        if (requestData.images[i]) {
+          await pool.query(
+            "INSERT INTO request_images (requestId, imagePath, imageIndex) VALUES (?, ?, ?)",
+            [id, requestData.images[i], i]
+          );
+        }
+      }
+    }
+
+    // Fetch and return the updated request
+    const [updatedRequest] = await pool.query(
+      "SELECT * FROM requests WHERE id = ?",
+      [id]
+    );
+
+    res.json({
+      message: "Request updated successfully",
+      request: updatedRequest[0],
+    });
+  } catch (error) {
+    console.error("Error updating request:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.deleteRequest = async (req, res) => {
   try {
     const id = req.params.id;
