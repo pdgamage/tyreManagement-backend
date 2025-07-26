@@ -4,27 +4,26 @@ const { DataTypes } = require("sequelize");
 const TireDetails = sequelize.define(
   "TireDetails",
   {
-    id: { 
-      type: DataTypes.INTEGER, 
-      primaryKey: true, 
-      autoIncrement: true 
+    id: {
+      type: DataTypes.BIGINT.UNSIGNED,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    tire_size: { 
-      type: DataTypes.STRING(100), 
-      allowNull: false,
-      unique: true
+    tire_size: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-    tire_brand: { 
-      type: DataTypes.STRING(100), 
-      allowNull: false 
+    tire_brand: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-    total_price: { 
-      type: DataTypes.DECIMAL(10, 2), 
-      allowNull: false 
+    total_price: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
-    warranty_distance: { 
-      type: DataTypes.INTEGER, 
-      allowNull: false 
+    warranty_distance: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   },
   {
