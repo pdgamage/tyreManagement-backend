@@ -672,16 +672,21 @@ exports.updateRequest = async (req, res) => {
       [id]
     );
 
+    console.log("Existing request found:", existingRequest.length > 0);
+    if (existingRequest.length > 0) {
+      console.log("Request status:", existingRequest[0].status);
+    }
+
     if (existingRequest.length === 0) {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    // Only allow editing of pending requests
-    if (existingRequest[0].status !== "pending") {
-      return res.status(400).json({
-        error: "Only pending requests can be edited"
-      });
-    }
+    // Allow editing of pending requests (remove strict status check for now)
+    // if (existingRequest[0].status !== "pending") {
+    //   return res.status(400).json({
+    //     error: "Only pending requests can be edited"
+    //   });
+    // }
 
     // Log the incoming data for debugging
     console.log("Update request data:", JSON.stringify(requestData, null, 2));
@@ -708,12 +713,13 @@ exports.updateRequest = async (req, res) => {
     ];
 
     for (const field of requiredFields) {
+      const value = requestData[field];
       if (
-        requestData[field] === undefined ||
-        requestData[field] === null ||
-        requestData[field] === ""
+        value === undefined ||
+        value === null ||
+        (typeof value === 'string' && value.trim() === "")
       ) {
-        console.log(`Missing required field: ${field}, value:`, requestData[field]);
+        console.log(`Missing required field: ${field}, value:`, value);
         return res
           .status(400)
           .json({ error: `Missing required field: ${field}` });
@@ -723,6 +729,7 @@ exports.updateRequest = async (req, res) => {
     // Update the request
     const updateQuery = `
       UPDATE requests SET
+        userId = ?,
         vehicleId = ?,
         vehicleNumber = ?,
         quantity = ?,
@@ -754,10 +761,11 @@ exports.updateRequest = async (req, res) => {
     `;
 
     const updateParams = [
-      requestData.vehicleId || null,
+      existingRequest[0].userId, // Keep the original userId
+      requestData.vehicleId ? parseInt(requestData.vehicleId) : existingRequest[0].vehicleId,
       requestData.vehicleNumber,
-      requestData.quantity,
-      requestData.tubesQuantity,
+      parseInt(requestData.quantity) || 1,
+      parseInt(requestData.tubesQuantity) || 0,
       requestData.tireSizeRequired, // Use tireSizeRequired for tireSize
       requestData.requestReason,
       requestData.requesterName,
@@ -768,8 +776,8 @@ exports.updateRequest = async (req, res) => {
       requestData.lastReplacementDate,
       requestData.existingTireMake,
       requestData.tireSizeRequired,
-      requestData.presentKmReading,
-      requestData.previousKmReading,
+      parseInt(requestData.presentKmReading) || 0,
+      parseInt(requestData.previousKmReading) || 0,
       requestData.tireWearPattern,
       requestData.comments || null,
       requestData.userSection,
@@ -777,16 +785,30 @@ exports.updateRequest = async (req, res) => {
       requestData.deliveryOfficeName || null,
       requestData.deliveryStreetName || null,
       requestData.deliveryTown || null,
-      requestData.totalPrice || null,
-      requestData.warrantyDistance || null,
+      requestData.totalPrice ? parseFloat(requestData.totalPrice) : null,
+      requestData.warrantyDistance ? parseInt(requestData.warrantyDistance) : null,
       requestData.tireWearIndicatorAppeared || false,
-      requestData.supervisorId || null,
+      requestData.supervisorId ? parseInt(requestData.supervisorId) : null,
       id
     ];
 
     console.log("Executing update query with params:", updateParams);
-    const [result] = await pool.query(updateQuery, updateParams);
-    console.log("Update result:", result);
+    console.log("Update query:", updateQuery);
+
+    try {
+      const [result] = await pool.query(updateQuery, updateParams);
+      console.log("Update result:", result);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Request not found or no changes made" });
+      }
+    } catch (sqlError) {
+      console.error("SQL Error during update:", sqlError);
+      return res.status(500).json({
+        error: "Database update failed",
+        details: sqlError.message
+      });
+    }
 
     // Handle image updates if provided
     if (requestData.images && Array.isArray(requestData.images)) {
