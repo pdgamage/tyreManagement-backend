@@ -600,18 +600,34 @@ exports.placeOrder = async (req, res) => {
     });
 
     try {
-      await pool.query(
-        `UPDATE requests SET 
-         status = ?, 
-         supplierName = ?, 
-         supplierPhone = ?, 
-         supplierEmail = ? 
-         WHERE id = ?`,
-        ["order placed", supplier.name, supplier.phone, supplier.email, id]
+      // First, let's check if the columns exist
+      const [columns] = await pool.query("DESCRIBE requests");
+      const supplierColumns = columns.filter(col => 
+        ['supplierName', 'supplierPhone', 'supplierEmail'].includes(col.Field)
       );
-      console.log("Successfully updated request with supplier details");
+      console.log("Available supplier columns:", supplierColumns.map(c => c.Field));
+
+      if (supplierColumns.length === 3) {
+        // All supplier columns exist, update with supplier details
+        const updateResult = await pool.query(
+          `UPDATE requests SET 
+           status = ?, 
+           supplierName = ?, 
+           supplierPhone = ?, 
+           supplierEmail = ? 
+           WHERE id = ?`,
+          ["order placed", supplier.name, supplier.phone, supplier.email, id]
+        );
+        console.log("Successfully updated request with supplier details. Affected rows:", updateResult[0].affectedRows);
+      } else {
+        console.log("Supplier columns not found, updating status only");
+        const updateResult = await pool.query("UPDATE requests SET status = ? WHERE id = ?", ["order placed", id]);
+        console.log("Updated status only. Affected rows:", updateResult[0].affectedRows);
+      }
     } catch (updateError) {
-      console.error("Failed to update request with supplier details:", updateError.message);
+      console.error("Failed to update request:", updateError.message);
+      console.error("Full error:", updateError);
+      
       // Try status only as fallback
       try {
         await pool.query("UPDATE requests SET status = ? WHERE id = ?", ["order placed", id]);
