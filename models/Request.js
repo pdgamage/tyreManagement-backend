@@ -114,19 +114,6 @@ const Request = sequelize.define(
       allowNull: true,
       defaultValue: false,
     },
-    // Supplier details
-    supplierName: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-    supplierPhone: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
-    supplierEmail: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
     // Department and Cost Center fields
     userSection: {
       type: DataTypes.STRING(100),
