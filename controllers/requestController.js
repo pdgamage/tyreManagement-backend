@@ -584,19 +584,15 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update request status to "order placed" and store supplier details
+    // Update request status to "order placed"
+    // Try different update strategies based on available columns
     try {
-      // Update request with supplier details and status
+      // First try with all columns
       await pool.query(
-        `UPDATE requests SET 
-         status = ?, 
-         supplierName = ?, 
-         supplierPhone = ?, 
-         supplierEmail = ? 
-         WHERE id = ?`,
-        ["order placed", supplier.name, supplier.phone, supplier.email, id]
+        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
+        ["order placed", id]
       );
-      console.log("Updated request with supplier details and status");
+      console.log("Updated request with all columns");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
       try {
