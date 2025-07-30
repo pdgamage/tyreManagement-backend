@@ -125,19 +125,6 @@ const Request = sequelize.define(
       allowNull: true,
       field: 'CostCenter', // Maps to the CostCenter column in database
     },
-    // Supplier details fields
-    supplierName: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-    supplierPhone: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
-    supplierEmail: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
   },
   {
     tableName: "requests",
