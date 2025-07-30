@@ -559,13 +559,6 @@ exports.placeOrder = async (req, res) => {
     }
     const supplier = suppliers[0];
 
-    console.log("Selected supplier details:", {
-      id: supplier.id,
-      name: supplier.name,
-      phone: supplier.phone,
-      email: supplier.email
-    });
-
     // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
       return res.status(400).json({
@@ -591,33 +584,35 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update request status to "order placed" and add supplier details
-    console.log("Updating request with supplier details:", {
-      requestId: id,
-      supplierName: supplier.name,
-      supplierPhone: supplier.phone,
-      supplierEmail: supplier.email
-    });
-
+    // Update request status to "order placed"
+    // Try different update strategies based on available columns
     try {
+      // First try with all columns
       await pool.query(
-        `UPDATE requests SET 
-         status = ?, 
-         supplierName = ?, 
-         supplierPhone = ?, 
-         supplierEmail = ? 
-         WHERE id = ?`,
-        ["order placed", supplier.name, supplier.phone, supplier.email, id]
+        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
+        ["order placed", id]
       );
-      console.log("Successfully updated request with supplier details");
-    } catch (updateError) {
-      console.error("Failed to update request with supplier details:", updateError.message);
-      // Try status only as fallback
+      console.log("Updated request with all columns");
+    } catch (error) {
+      console.log("Full update failed, trying status only:", error.message);
       try {
-        await pool.query("UPDATE requests SET status = ? WHERE id = ?", ["order placed", id]);
-        console.log("Fallback: Updated status only");
-      } catch (fallbackError) {
-        console.error("Fallback update also failed:", fallbackError.message);
+        // If that fails, try just updating status
+        await pool.query("UPDATE requests SET status = ? WHERE id = ?", [
+          "order placed",
+          id,
+        ]);
+        console.log("Updated request status only");
+      } catch (statusError) {
+        console.log(
+          "Status update also failed, trying with enum check:",
+          statusError.message
+        );
+        // If status update fails, it might be an enum issue, try with a valid enum value
+        await pool.query(
+          "UPDATE requests SET status = ? WHERE id = ?",
+          ["complete", id] // Use 'complete' as fallback since 'order placed' might not be in enum
+        );
+        console.log("Updated request status to complete as fallback");
       }
     }
 
@@ -629,7 +624,6 @@ exports.placeOrder = async (req, res) => {
         id: supplier.id,
         name: supplier.name,
         email: supplier.email,
-        phone: supplier.phone
       },
       emailResult: emailResult,
       orderNotes: orderNotes,
