@@ -218,7 +218,7 @@ exports.getRequestById = async (req, res) => {
 
 exports.updateRequestStatus = async (req, res) => {
   try {
-    const { status, notes, role, userId } = req.body;
+    const { status, notes, role, userId, supplierName, supplierPhone, supplierEmail } = req.body;
 
     // Allow all valid statuses from your enum
     const allowedStatuses = [
@@ -302,6 +302,13 @@ exports.updateRequestStatus = async (req, res) => {
       }
     }
 
+    // If the order is being placed, save the supplier details
+    if (status === "order placed") {
+      if (supplierName) request.supplierName = supplierName;
+      if (supplierPhone) request.supplierPhone = supplierPhone;
+      if (supplierEmail) request.supplierEmail = supplierEmail;
+    }
+
     console.log("Attempting to save request with status:", status);
     console.log("Request data before save:", {
       id: request.id,
@@ -354,6 +361,22 @@ exports.updateRequestStatus = async (req, res) => {
       ) {
         updateQuery += ", customer_officer_note = ?";
         params.push(notes);
+      }
+
+      // Add supplier details to the raw SQL query if placing an order
+      if (status === "order placed") {
+        if (supplierName) {
+          updateQuery += ", supplierName = ?";
+          params.push(supplierName);
+        }
+        if (supplierPhone) {
+          updateQuery += ", supplierPhone = ?";
+          params.push(supplierPhone);
+        }
+        if (supplierEmail) {
+          updateQuery += ", supplierEmail = ?";
+          params.push(supplierEmail);
+        }
       }
 
       updateQuery += " WHERE id = ?";
