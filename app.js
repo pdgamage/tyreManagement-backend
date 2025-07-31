@@ -2,17 +2,17 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-// const passport = require("./middleware/azureAuth"); // Temporarily disabled
+const passport = require("./middleware/azureAuth");
 const { syncAndAlterDatabase } = require("./config/db");
 
 const app = express();
 
 // Sync and alter database schema before starting the server
-// Temporarily disabled for testing
-// syncAndAlterDatabase().catch((error) => {
-//   console.error("Database schema alteration failed:", error);
-//   console.log("Server will continue starting...");
-// });
+// Don't block server startup if this fails
+syncAndAlterDatabase().catch((error) => {
+  console.error("Database schema alteration failed:", error);
+  console.log("Server will continue starting...");
+});
 
 // CORS Configuration
 const corsOptions = {
@@ -49,13 +49,13 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use("/uploads", express.static(uploadDir));
 
-// Routes - temporarily disabled all routes to test basic server
-// app.use("/api/vehicles", require("./routes/vehicleRoutes"));
-// app.use("/api/requests", require("./routes/requestRoutes"));
-// app.use("/api/suppliers", require("./routes/supplierRoutes"));
-// app.use("/api/tire-details", require("./routes/tireDetailsRoutes"));
-// const userRoutes = require("./routes/userRoutes");
-// app.use("/api/users", userRoutes);
+// Routes
+app.use("/api/vehicles", require("./routes/vehicleRoutes"));
+app.use("/api/requests", require("./routes/requestRoutes"));
+app.use("/api/suppliers", require("./routes/supplierRoutes"));
+app.use("/api/tire-details", require("./routes/tireDetailsRoutes"));
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -67,14 +67,13 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Temporarily disabled Azure authentication
-// app.get(
-//   "/api/azure-protected",
-//   passport.authenticate("oauth-bearer", { session: false }),
-//   (req, res) => {
-//     res.json({ user: req.user });
-//   }
-// );
+app.get(
+  "/api/azure-protected",
+  passport.authenticate("oauth-bearer", { session: false }),
+  (req, res) => {
+    res.json({ user: req.user });
+  }
+);
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {
