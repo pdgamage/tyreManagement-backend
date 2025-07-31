@@ -217,6 +217,81 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
+exports.updateRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const updateData = req.body;
+
+    // Find the existing request
+    const existingRequest = await Request.findByPk(requestId);
+    if (!existingRequest) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if request is in pending status (only pending requests can be edited)
+    if (existingRequest.status !== "pending") {
+      return res.status(400).json({
+        error: "Only pending requests can be edited",
+      });
+    }
+
+    // Update the request with new data
+    const updatedRequest = await existingRequest.update({
+      vehicleNumber: updateData.vehicleNumber,
+      vehicleId: updateData.vehicleId,
+      vehicleBrand: updateData.vehicleBrand,
+      vehicleModel: updateData.vehicleModel,
+      tireSizeRequired: updateData.tireSizeRequired,
+      quantity: updateData.quantity,
+      tubesQuantity: updateData.tubesQuantity,
+      requestReason: updateData.requestReason,
+      requesterName: updateData.requesterName,
+      requesterEmail: updateData.requesterEmail,
+      requesterPhone: updateData.requesterPhone,
+      userSection: updateData.userSection,
+      lastReplacementDate: updateData.lastReplacementDate,
+      existingTireMake: updateData.existingTireMake,
+      costCenter: updateData.costCenter,
+      presentKmReading: updateData.presentKmReading,
+      previousKmReading: updateData.previousKmReading,
+      tireWearPattern: updateData.tireWearPattern,
+      comments: updateData.comments,
+      supervisorId: updateData.supervisorId,
+      deliveryOfficeName: updateData.deliveryOfficeName,
+      deliveryStreetName: updateData.deliveryStreetName,
+      deliveryTown: updateData.deliveryTown,
+      totalPrice: updateData.totalPrice,
+      warrantyDistance: updateData.warrantyDistance,
+      tireWearIndicatorAppeared: updateData.tireWearIndicatorAppeared,
+    });
+
+    // Handle image updates if provided
+    if (updateData.images && updateData.images.length > 0) {
+      // Delete existing images
+      await RequestImage.destroy({
+        where: { requestId: requestId },
+      });
+
+      // Add new images
+      for (let i = 0; i < updateData.images.length; i++) {
+        await RequestImage.create({
+          requestId: requestId,
+          imagePath: updateData.images[i],
+          imageIndex: i,
+        });
+      }
+    }
+
+    res.json({
+      message: "Request updated successfully",
+      request: updatedRequest,
+    });
+  } catch (error) {
+    console.error("Error updating request:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.updateRequestStatus = async (req, res) => {
   try {
     const { status, notes, role, userId } = req.body;
