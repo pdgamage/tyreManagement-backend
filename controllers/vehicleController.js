@@ -1,16 +1,8 @@
 const Vehicle = require("../models/Vehicle");
+const { Op } = require("sequelize");
 
-exports.getAllVehicles = async (req, res) => {
-  try {
-    const vehicles = await Vehicle.findAll();
-    res.json(vehicles);
-  } catch (error) {
-    console.error("Error fetching vehicles:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-exports.createVehicle = async (req, res) => {
+// Register a new vehicle
+exports.registerVehicle = async (req, res) => {
   try {
     const {
       vehicleNumber,
@@ -42,28 +34,40 @@ exports.createVehicle = async (req, res) => {
 
     res.status(201).json({ success: true, data: vehicle });
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({
-        success: false,
-        error: "A vehicle with this number already exists",
-      });
-    }
-    console.error("Error creating vehicle:", err);
-    res.status(500).json({ success: false, error: "Internal server error" });
+        res.status(400).json({ message: err.message });
   }
 };
 
-exports.getVehicleById = async (req, res) => {
+// Get all registered vehicles
+exports.getAllVehicles = async (req, res) => {
   try {
-    const vehicle = await Vehicle.findById(req.params.id);
-
-    if (!vehicle) {
-      return res.status(404).json({ error: "Vehicle not found" });
-    }
-
-    res.json(vehicle);
+    const vehicles = await Vehicle.findAll();
+    res.json(vehicles);
   } catch (error) {
-    console.error("Error fetching vehicle:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Search for vehicles by number (for auto-suggestion)
+exports.searchVehicles = async (req, res) => {
+  const { term } = req.query;
+
+  if (!term || term.length < 2) {
+    return res.json([]);
+  }
+
+  try {
+    const vehicles = await Vehicle.findAll({
+      where: {
+        vehicleNo: {
+          [Op.like]: `${term}%`,
+        },
+      },
+      attributes: ["vehicleNo"],
+      limit: 10,
+    });
+    res.json(vehicles.map((v) => v.vehicleNo));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

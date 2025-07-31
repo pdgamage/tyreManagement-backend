@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const vehicleController = require('../controllers/vehicleController');
 
-// Get all vehicles
+// Register a new vehicle
+router.post('/register', vehicleController.registerVehicle);
+
+// Get all registered vehicles
 router.get('/', vehicleController.getAllVehicles);
 
-// Create a new vehicle
-router.post('/', vehicleController.createVehicle);
-
-// Get a single vehicle
-router.get('/:id', vehicleController.getVehicleById);
+// Search for vehicles by number for auto-suggestion
+router.get('/search', vehicleController.searchVehicles);
 
 module.exports = router;
