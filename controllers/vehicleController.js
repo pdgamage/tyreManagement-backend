@@ -12,16 +12,7 @@ exports.getAllVehicles = async (req, res) => {
 
 exports.createVehicle = async (req, res) => {
   try {
-    const {
-      vehicleNumber,
-      make,
-      model,
-      type,
-      costCentre,
-      department,
-      status,
-      registeredBy,
-    } = req.body;
+    const { vehicleNumber, make, model, type, status, registeredBy } = req.body;
 
     if (!vehicleNumber) {
       return res
@@ -34,8 +25,6 @@ exports.createVehicle = async (req, res) => {
       make,
       model,
       type,
-      costCentre,
-      department,
       status,
       registeredBy,
     });
