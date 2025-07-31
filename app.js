@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-const passport = require("./middleware/azureAuth");
+// const passport = require("./middleware/azureAuth"); // Temporarily disabled
 const { syncAndAlterDatabase } = require("./config/db");
 
 const app = express();
@@ -49,13 +49,13 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use("/uploads", express.static(uploadDir));
 
-// Routes
-app.use("/api/vehicles", require("./routes/vehicleRoutes"));
-app.use("/api/requests", require("./routes/requestRoutes"));
-app.use("/api/suppliers", require("./routes/supplierRoutes"));
+// Routes - temporarily testing one by one
+// app.use("/api/vehicles", require("./routes/vehicleRoutes"));
+// app.use("/api/requests", require("./routes/requestRoutes"));
+// app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/tire-details", require("./routes/tireDetailsRoutes"));
-const userRoutes = require("./routes/userRoutes");
-app.use("/api/users", userRoutes);
+// const userRoutes = require("./routes/userRoutes");
+// app.use("/api/users", userRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -67,13 +67,14 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get(
-  "/api/azure-protected",
-  passport.authenticate("oauth-bearer", { session: false }),
-  (req, res) => {
-    res.json({ user: req.user });
-  }
-);
+// Temporarily disabled Azure authentication
+// app.get(
+//   "/api/azure-protected",
+//   passport.authenticate("oauth-bearer", { session: false }),
+//   (req, res) => {
+//     res.json({ user: req.user });
+//   }
+// );
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {

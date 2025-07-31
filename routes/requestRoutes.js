@@ -36,9 +36,10 @@ router.put("/:id/status", requestController.updateRequestStatus);
 router.get("/user/:id", requestController.getRequestsByUser);
 
 // Check vehicle request restrictions
-router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicleRestrictions);
-
-
+router.get(
+  "/vehicle/:vehicleId/restrictions",
+  requestController.checkVehicleRestrictions
+);
 
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
