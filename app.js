@@ -11,12 +11,7 @@ const app = express();
 syncAndAlterDatabase();
 
 // Middleware
-app.use(
-  cors({
-    origin: "https://tyre-management-frontend.vercel.app",
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
