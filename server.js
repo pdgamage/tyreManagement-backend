@@ -2,8 +2,8 @@ require("dotenv").config();
 const app = require("./app");
 const { sequelize, pool } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
-const requestRoutes = require("./routes/requestRoutes");
-const vehicleRoutes = require("./routes/vehicleRoutes");
+// const requestRoutes = require("./routes/requestRoutes"); // Removed - routes handled in app.js
+// const vehicleRoutes = require("./routes/vehicleRoutes"); // Removed - routes handled in app.js
 // const sseRoutes = require("./routes/sseRoutes"); // Disabled
 // const websocketService = require("./services/websocketService"); // Disabled
 const http = require("http");
@@ -31,9 +31,9 @@ async function testDbConnection() {
   }
 }
 
-// Middleware for routes
-app.use("/api", requestRoutes);
-app.use("/api", vehicleRoutes);
+// Routes are already defined in app.js, no need to mount them again here
+// app.use("/api", requestRoutes); // Removed - already mounted in app.js
+// app.use("/api", vehicleRoutes); // Removed - already mounted in app.js
 // app.use("/api/sse", sseRoutes); // Disabled
 
 // Create HTTP server
