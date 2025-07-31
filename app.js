@@ -27,13 +27,6 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use("/uploads", express.static(uploadDir));
 
-// Serve static files from public directory
-const publicDir = path.join(__dirname, "public");
-if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir, { recursive: true });
-}
-app.use("/public", express.static(publicDir));
-
 // Routes
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
