@@ -679,3 +679,63 @@ exports.deleteRequest = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getRequestsByVehicleNumber = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+    
+    if (!vehicleNumber) {
+      return res.status(400).json({ error: "Vehicle number is required" });
+    }
+
+    // Use raw SQL to join with vehicles table and filter by vehicle number
+    const [requests] = await pool.query(`
+      SELECT
+        r.*,
+        v.department as vehicleDepartment,
+        v.costCentre as vehicleCostCentre
+      FROM requests r
+      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
+      WHERE r.vehicleNumber = ?
+      ORDER BY r.submittedAt DESC
+    `, [vehicleNumber]);
+
+    if (requests.length === 0) {
+      return res.status(404).json({ 
+        error: "No tire requests found for this vehicle number",
+        vehicleNumber: vehicleNumber
+      });
+    }
+
+    // Fetch images for each request
+    const requestsWithImages = await Promise.all(
+      requests.map(async (request) => {
+        const images = await RequestImage.findAll({
+          where: { requestId: request.id },
+          order: [["imageIndex", "ASC"]],
+        });
+        const imageUrls = images.map((img) => img.imagePath);
+
+        // Only use actual department information, don't add defaults
+        const departmentInfo = {
+          ...request,
+          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
+          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
+          images: imageUrls
+        };
+
+        return departmentInfo;
+      })
+    );
+
+    res.json({
+      success: true,
+      data: requestsWithImages,
+      vehicleNumber: vehicleNumber,
+      count: requestsWithImages.length
+    });
+  } catch (error) {
+    console.error("Error in getRequestsByVehicleNumber:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
