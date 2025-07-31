@@ -155,12 +155,9 @@ exports.getAllRequests = async (req, res) => {
     // Use raw SQL to join with vehicles table to get department information
     const [requests] = await pool.query(`
       SELECT
-        r.*,
-        v.department as vehicleDepartment,
-        v.costCentre as vehicleCostCentre
-      FROM requests r
-      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
-      ORDER BY r.submittedAt DESC
+  r.*
+FROM requests r
+ORDER BY r.submittedAt DESC
     `);
 
     // Fetch images for each request
@@ -175,9 +172,9 @@ exports.getAllRequests = async (req, res) => {
         // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
-          images: imageUrls
+          userSection: request.userSection || null,
+          costCenter: request.costCenter || null,
+          images: imageUrls,
         };
 
         return departmentInfo;
@@ -402,16 +399,15 @@ exports.getRequestsByUser = async (req, res) => {
     const userId = req.params.id;
 
     // Use raw SQL to join with vehicles table to get department information
-    const [requests] = await pool.query(`
+    const [requests] = await pool.query(
+      `
       SELECT
-        r.*,
-        v.department as vehicleDepartment,
-        v.costCentre as vehicleCostCentre
-      FROM requests r
-      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
-      WHERE r.userId = ?
-      ORDER BY r.submittedAt DESC
-    `, [userId]);
+  r.*
+FROM requests r
+ORDER BY r.submittedAt DESC
+    `,
+      [userId]
+    );
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
@@ -425,9 +421,9 @@ exports.getRequestsByUser = async (req, res) => {
         // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
-          images: imageUrls
+          userSection: request.userSection || null,
+          costCenter: request.costCenter || null,
+          images: imageUrls,
         };
 
         return departmentInfo;
