@@ -8,11 +8,11 @@ const { syncAndAlterDatabase } = require("./config/db");
 const app = express();
 
 // Sync and alter database schema before starting the server
-// Don't block server startup if this fails
-syncAndAlterDatabase().catch((error) => {
-  console.error("Database schema alteration failed:", error);
-  console.log("Server will continue starting...");
-});
+// Temporarily disabled for testing
+// syncAndAlterDatabase().catch((error) => {
+//   console.error("Database schema alteration failed:", error);
+//   console.log("Server will continue starting...");
+// });
 
 // CORS Configuration
 const corsOptions = {
@@ -49,11 +49,11 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use("/uploads", express.static(uploadDir));
 
-// Routes - temporarily testing one by one
+// Routes - temporarily disabled all routes to test basic server
 // app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 // app.use("/api/requests", require("./routes/requestRoutes"));
 // app.use("/api/suppliers", require("./routes/supplierRoutes"));
-app.use("/api/tire-details", require("./routes/tireDetailsRoutes"));
+// app.use("/api/tire-details", require("./routes/tireDetailsRoutes"));
 // const userRoutes = require("./routes/userRoutes");
 // app.use("/api/users", userRoutes);
 

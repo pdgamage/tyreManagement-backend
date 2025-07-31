@@ -13,7 +13,7 @@ if (missingEnvVars.length > 0) {
 
 const app = require("./app");
 const { sequelize, pool } = require("./config/db"); // Correct import
-require("./models"); // Loads all models and associations
+// require("./models"); // Temporarily disabled - Loads all models and associations
 // const requestRoutes = require("./routes/requestRoutes"); // Removed - routes handled in app.js
 // const vehicleRoutes = require("./routes/vehicleRoutes"); // Removed - routes handled in app.js
 // const sseRoutes = require("./routes/sseRoutes"); // Disabled
@@ -71,9 +71,9 @@ async function initializeDatabase() {
     // Test database connection
     await testDbConnection();
 
-    // Sync models
-    await sequelize.sync({ alter: true });
-    console.log("Database & tables synced!");
+    // Sync models - temporarily disabled
+    // await sequelize.sync({ alter: true });
+    console.log("Database connection tested successfully!");
   } catch (error) {
     console.error("Database initialization failed:", error);
     // Don't exit the process - server can still handle health checks
