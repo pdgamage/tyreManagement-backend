@@ -10,8 +10,31 @@ const app = express();
 // Sync and alter database schema before starting the server
 syncAndAlterDatabase();
 
+// CORS Configuration
+const corsOptions = {
+  origin: [
+    "https://tyre-management-frontend.vercel.app",
+    "https://tyremanagement-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Cache-Control",
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Enable preflight for all routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
