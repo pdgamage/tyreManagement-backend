@@ -592,7 +592,7 @@ exports.checkVehicleRestrictions = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplierId, orderNotes } = req.body;
+    const { supplierId } = req.body;
 
     console.log(`Placing order for request ${id} with supplier ${supplierId}`);
 
@@ -670,13 +670,15 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Update request status to "order placed" and add supplier details from request body
-    const { supplierName, supplierEmail, supplierPhone } = req.body;
+    const { supplierName, supplierEmail, supplierPhone, orderNumber, orderNotes } = req.body;
     
-    console.log("Updating request with supplier details:", {
+    console.log("Updating request with supplier and order details:", {
       requestId: id,
       supplierName,
       supplierPhone,
       supplierEmail,
+      orderNumber,
+      orderNotes
     });
 
     try {
@@ -685,9 +687,11 @@ exports.placeOrder = async (req, res) => {
          status = ?, 
          supplierName = ?, 
          supplierPhone = ?, 
-         supplierEmail = ? 
+         supplierEmail = ?,
+         orderNumber = ?,
+         orderNotes = ?
          WHERE id = ?`,
-        ["order placed", supplierName, supplierPhone, supplierEmail, id]
+        ["order placed", supplierName, supplierPhone, supplierEmail, orderNumber, orderNotes, id]
       );
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
