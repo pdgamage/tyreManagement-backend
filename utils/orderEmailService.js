@@ -82,6 +82,7 @@ I hope this message finds you well. We are writing to request a quotation for ti
 
 We have an immediate requirement for the following specifications:
 
+    • Order Number: ${request.orderNumber || 'N/A'}
     • Vehicle Number: ${request.vehicleNumber}
     • Tire Size Required: ${request.tireSizeRequired}
     • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}

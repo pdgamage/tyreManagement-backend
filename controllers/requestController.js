@@ -680,120 +680,65 @@ exports.placeOrder = async (req, res) => {
       supplierPhone
     });
 
-    // Send order email to supplier
-    let emailResult;
     try {
-      emailResult = await sendOrderEmail(supplier, request, orderNotes);
-      console.log("Formspree email result:", emailResult);
-    } catch (emailError) {
-      console.error("Error sending email:", emailError);
-      // Log full error object for debugging
-      if (emailError.response) {
-        console.error("Formspree response:", emailError.response.data);
-      }
-      return res.status(500).json({
-        message: "Failed to send order email",
-        error: emailError.message,
-        details: emailError.response ? emailError.response.data : undefined,
-      });
-    }
-
-    // Update request status to "order placed" and add supplier details from request body
-    const { supplierName, supplierEmail, supplierPhone, orderNumber, orderNotes } = req.body;
-    
-    console.log("Updating request with supplier and order details:", {
-      requestId: id,
-      supplierName,
-      supplierPhone,
-      supplierEmail,
-      orderNumber,
-      orderNotes
-    });
-
-    try {
-      // Update using direct SQL query to ensure all fields are updated
-      const updateQuery = `
-        UPDATE requests 
-        SET 
-          status = 'order placed',
-          supplierName = ?,
-          supplierPhone = ?,
-          supplierEmail = ?,
-          orderNumber = ?,
-          orderNotes = ?
-        WHERE id = ?
-      `;
-      
-      const updateValues = [
-        orderData.supplierName,
-        orderData.supplierPhone,
-        orderData.supplierEmail,
-        orderData.orderNumber,
-        orderData.orderNotes,
-        id
-      ];
-
-      console.log('Executing update query:', { query: updateQuery, values: updateValues });
-      
-      await pool.query(updateQuery, updateValues);
-      console.log("Successfully updated request with supplier details");
-    } catch (updateError) {
-      console.error(
-        "Failed to update request with supplier details:",
-        updateError.message
+      // Update request with order details
+      await Request.update(
+        {
+          orderNumber,
+          orderNotes,
+          status: 'ordered',
+          supplier_id: supplierId,
+          supplierName: supplier.name,
+          supplierPhone: supplier.phone,
+          supplierEmail: supplier.email
+        },
+        {
+          where: { id }
+        }
       );
-      // Try status only as fallback
-      try {
-        await pool.query("UPDATE requests SET status = ? WHERE id = ?", [
-          "order placed",
-          id,
-        ]);
-        console.log("Fallback: Updated status only");
-      } catch (fallbackError) {
-        console.error("Fallback update also failed:", fallbackError.message);
-      }
-    }
 
-    console.log("Order placed successfully:", emailResult);
+      // Add order number to request object for email
+      request.orderNumber = orderNumber;
 
-    res.json({
-      message: "Order placed successfully",
-      supplier: {
-        id: supplier.id,
-        name: supplier.name,
-        email: supplier.email,
-        phone: supplier.phone,
-      },
-      emailResult: emailResult,
-      orderNotes: orderNotes,
-    });
-  } catch (err) {
-    console.error("Error placing order:", err);
+      // Send order email to supplier
+      const emailResult = await sendOrderEmail(supplier, request, orderNotes);
+      console.log("Formspree email result:", emailResult);
 
-    // Check if this is just a database error but email was sent
-    if (
-      err.message &&
-      err.message.includes("Data truncated") &&
-      typeof emailResult !== "undefined"
-    ) {
-      // Email was sent successfully, return success despite database error
-      console.log("Email sent successfully despite database error");
-      res.json({
-        message: "Order placed successfully (email sent)",
+      // Return success response
+      return res.status(200).json({
+        message: "Order placed successfully",
         supplier: {
           id: supplier.id,
           name: supplier.name,
           email: supplier.email,
+          phone: supplier.phone,
         },
-        emailResult: emailResult,
-        orderNotes: orderNotes,
-        warning:
-          "Database update had issues but order email was sent successfully",
+        emailResult,
+        orderNumber,
+        orderNotes
       });
-    } else {
-      res.status(500).json({
-        message: "Error placing order",
-        error: err.message,
+    } catch (error) {
+      console.error("Error processing order:", error);
+      
+      // Check if this is just a database error but email was sent successfully
+      if (error.message && error.message.includes("Data truncated") && error.emailResult) {
+        return res.json({
+          message: "Order placed successfully (email sent)",
+          supplier: {
+            id: supplier.id,
+            name: supplier.name,
+            email: supplier.email,
+          },
+          emailResult: error.emailResult,
+          orderNumber,
+          orderNotes,
+          warning: "Database update had issues but order email was sent successfully"
+        });
+      }
+      
+      return res.status(500).json({
+        message: "Failed to process order",
+        error: error.message
       });
     }
   }
