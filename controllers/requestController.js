@@ -669,12 +669,14 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update request status to "order placed" and add supplier details
+    // Update request status to "order placed" and add supplier details from request body
+    const { supplierName, supplierEmail, supplierPhone } = req.body;
+    
     console.log("Updating request with supplier details:", {
       requestId: id,
-      supplierName: supplier.name,
-      supplierPhone: supplier.phone,
-      supplierEmail: supplier.email,
+      supplierName,
+      supplierPhone,
+      supplierEmail,
     });
 
     try {
@@ -685,7 +687,7 @@ exports.placeOrder = async (req, res) => {
          supplierPhone = ?, 
          supplierEmail = ? 
          WHERE id = ?`,
-        ["order placed", supplier.name, supplier.phone, supplier.email, id]
+        ["order placed", supplierName, supplierPhone, supplierEmail, id]
       );
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
