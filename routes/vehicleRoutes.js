@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const vehicleController = require('../controllers/vehicleController');
 
+// Get vehicle suggestions for autocomplete
+router.get('/suggestions', vehicleController.getVehicleSuggestions);
+
+// Search vehicle with its requests
+router.get('/search', vehicleController.searchVehicleWithRequests);
+
 // Get all vehicles
 router.get('/', vehicleController.getAllVehicles);
 
