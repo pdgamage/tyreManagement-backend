@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Number Filter - Tyre Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 40px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .vehicle-number {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .vehicle-details {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .results-section {
+            padding: 40px;
+            min-height: 400px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .results-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .results-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .request-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .request-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .request-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .request-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .request-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .request-body {
+            padding: 20px;
+        }
+
+        .request-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-complete { background: #d1ecf1; color: #0c5460; }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-results i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-section {
+                padding: 20px;
+            }
+            
+            .results-section {
+                padding: 20px;
+            }
+            
+            .request-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Vehicle Request Filter</h1>
+            <p>Search for vehicle numbers and view all related tire requests</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="vehicleSearch" 
+                    class="search-input" 
+                    placeholder="Type vehicle number (e.g., ABC-1234)..."
+                    autocomplete="off"
+                >
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div id="resultsContainer">
+                <div class="no-results">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
+                    <h3>Search for a vehicle number</h3>
+                    <p>Start typing a vehicle number to see auto-suggestions and view all related requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin + '/api';
+        
+        let searchTimeout;
+        let currentVehicleNumber = '';
+
+        const vehicleSearchInput = document.getElementById('vehicleSearch');
+        const suggestionsContainer = document.getElementById('suggestions');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        // Auto-suggestion functionality
+        vehicleSearchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 1) {
+                hideSuggestions();
+                showDefaultMessage();
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetchSuggestions(query);
+            }, 300);
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                hideSuggestions();
+            }
+        });
+
+        async function fetchSuggestions(query) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/vehicles/suggestions?query=${encodeURIComponent(query)}`);
+                const suggestions = await response.json();
+                
+                displaySuggestions(suggestions);
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+                hideSuggestions();
+            }
+        }
+
+        function displaySuggestions(suggestions) {
+            if (suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            const suggestionsHTML = suggestions.map(vehicle => `
+                <div class="suggestion-item" onclick="selectVehicle('${vehicle.vehicleNumber}')">
+                    <div class="vehicle-number">${vehicle.vehicleNumber}</div>
+                    <div class="vehicle-details">${vehicle.make || 'Unknown'} ${vehicle.model || ''} - ${vehicle.type || 'Unknown Type'}</div>
+                </div>
+            `).join('');
+
+            suggestionsContainer.innerHTML = suggestionsHTML;
+            suggestionsContainer.style.display = 'block';
+        }
+
+        function hideSuggestions() {
+            suggestionsContainer.style.display = 'none';
+        }
+
+        function selectVehicle(vehicleNumber) {
+            vehicleSearchInput.value = vehicleNumber;
+            hideSuggestions();
+            searchVehicleRequests(vehicleNumber);
+        }
+
+        async function searchVehicleRequests(vehicleNumber) {
+            if (vehicleNumber === currentVehicleNumber) {
+                return; // Already showing results for this vehicle
+            }
+
+            currentVehicleNumber = vehicleNumber;
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/vehicles/${encodeURIComponent(vehicleNumber)}/requests`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error fetching vehicle requests:', error);
+                showError('Failed to fetch vehicle requests. Please try again.');
+            }
+        }
+
+        function showLoading() {
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading vehicle requests...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        function showDefaultMessage() {
+            currentVehicleNumber = '';
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
+                    <h3>Search for a vehicle number</h3>
+                    <p>Start typing a vehicle number to see auto-suggestions and view all related requests</p>
+                </div>
+            `;
+        }
+
+        function displayResults(data) {
+            const { vehicleNumber, totalRequests, requests } = data;
+
+            if (totalRequests === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="results-header">
+                        <h2 class="results-title">Results for "${vehicleNumber}"</h2>
+                        <span class="results-count">0 requests</span>
+                    </div>
+                    <div class="no-results">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">📋</div>
+                        <h3>No requests found</h3>
+                        <p>No tire requests have been submitted for vehicle "${vehicleNumber}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const requestsHTML = requests.map(request => `
+                <div class="request-card">
+                    <div class="request-header">
+                        <div class="request-id">Request #${request.id}</div>
+                        <div class="request-date">Submitted: ${new Date(request.submittedAt).toLocaleDateString()}</div>
+                    </div>
+                    <div class="request-body">
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Status</span>
+                                <span class="detail-value">
+                                    <span class="status-badge status-${getStatusClass(request.status)}">${request.status}</span>
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Requester</span>
+                                <span class="detail-value">${request.requesterName}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Vehicle Brand</span>
+                                <span class="detail-value">${request.vehicleBrand}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Vehicle Model</span>
+                                <span class="detail-value">${request.vehicleModel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Tire Size Required</span>
+                                <span class="detail-value">${request.tireSizeRequired}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantity</span>
+                                <span class="detail-value">${request.quantity} tires, ${request.tubesQuantity} tubes</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Present KM Reading</span>
+                                <span class="detail-value">${request.presentKmReading?.toLocaleString() || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Department</span>
+                                <span class="detail-value">${request.userSection || 'N/A'}</span>
+                            </div>
+                        </div>
+                        ${request.requestReason ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Request Reason</span>
+                                <span class="detail-value">${request.requestReason}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            resultsContainer.innerHTML = `
+                <div class="results-header">
+                    <h2 class="results-title">Results for "${vehicleNumber}"</h2>
+                    <span class="results-count">${totalRequests} request${totalRequests !== 1 ? 's' : ''}</span>
+                </div>
+                ${requestsHTML}
+            `;
+        }
+
+        function getStatusClass(status) {
+            if (status.includes('approved') || status === 'complete') return 'approved';
+            if (status.includes('rejected')) return 'rejected';
+            if (status === 'pending') return 'pending';
+            return 'complete';
+        }
+
+        // Handle Enter key in search input
+        vehicleSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (query) {
+                    hideSuggestions();
+                    searchVehicleRequests(query);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
