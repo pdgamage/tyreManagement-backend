@@ -5,12 +5,6 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
-    // Debug log for order number
-    console.log('Request object order number:', {
-      orderNumber: request.orderNumber,
-      requestId: request.id
-    });
-    
     // Create email subject
     const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
 
@@ -88,7 +82,6 @@ I hope this message finds you well. We are writing to request a quotation for ti
 
 We have an immediate requirement for the following specifications:
 
-    • Order Number: ${request.orderNumber || 'N/A'}
     • Vehicle Number: ${request.vehicleNumber}
     • Tire Size Required: ${request.tireSizeRequired}
     • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
