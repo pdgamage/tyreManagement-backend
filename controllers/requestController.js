@@ -670,42 +670,25 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Update request status to "order placed" and add supplier details from request body
-    const { supplierName, supplierEmail, supplierPhone, orderNumber } = req.body;
+    const { supplierName, supplierEmail, supplierPhone } = req.body;
     
-    console.log("Received order data:", {
+    console.log("Updating request with supplier details:", {
       requestId: id,
       supplierName,
       supplierPhone,
       supplierEmail,
-      orderNumber
     });
 
-    // Simple direct query with all fields
-    const updateQuery = `
-      UPDATE requests 
-      SET status = ?,
-          supplierName = ?,
-          supplierPhone = ?,
-          supplierEmail = ?,
-          orderNumber = ?
-      WHERE id = ?
-    `;
-
-    const updateValues = [
-      'order placed',
-      supplierName,
-      supplierPhone,
-      supplierEmail,
-      orderNumber,
-      id
-    ];
-
     try {
-      // Log the query and values for debugging
-      console.log('Executing SQL:', updateQuery);
-      console.log('With values:', updateValues);
-
-      await pool.query(updateQuery, updateValues);
+      await pool.query(
+        `UPDATE requests SET 
+         status = ?, 
+         supplierName = ?, 
+         supplierPhone = ?, 
+         supplierEmail = ? 
+         WHERE id = ?`,
+        ["order placed", supplierName, supplierPhone, supplierEmail, id]
+      );
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
       console.error(
