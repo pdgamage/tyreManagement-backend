@@ -702,10 +702,10 @@ exports.placeOrder = async (req, res) => {
 
     try {
       // Log the query and values for debugging
-      console.log('Executing SQL:', query);
+      console.log('Executing SQL:', updateQuery);
       console.log('With values:', updateValues);
 
-      await pool.query(query, updateValues);
+      await pool.query(updateQuery, updateValues);
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
       console.error(
