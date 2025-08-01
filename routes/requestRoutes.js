@@ -38,6 +38,9 @@ router.put("/:id", requestController.updateRequest);
 // Get requests by user
 router.get("/user/:id", requestController.getRequestsByUser);
 
+// Get requests by vehicle number
+router.get("/vehicle/number/:vehicleNumber", requestController.getRequestsByVehicleNumber);
+
 // Check vehicle request restrictions
 router.get(
   "/vehicle/:vehicleId/restrictions",

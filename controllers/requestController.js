@@ -1,5 +1,25 @@
 const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
+
+// Get all requests for a specific vehicle number
+exports.getRequestsByVehicleNumber = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+    if (!vehicleNumber) {
+      return res.status(400).json({ error: 'Vehicle number is required' });
+    }
+    // Fetch requests matching the vehicle number
+    const requests = await Request.findAll({
+      where: { vehicleNumber },
+      order: [['submittedAt', 'DESC']]
+    });
+    // Optionally, include images or associations if needed
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching requests by vehicle number:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
 // const websocketService = require("../services/websocketService"); // Disabled

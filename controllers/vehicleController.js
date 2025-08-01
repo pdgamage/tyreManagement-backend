@@ -1,5 +1,22 @@
 const Vehicle = require("../models/Vehicle");
 
+// Get all registered vehicle numbers for auto-suggest
+exports.getVehicleNumbers = async (req, res) => {
+  try {
+    // Optionally, filter only active/registered vehicles if there is a status field
+    const vehicles = await Vehicle.findAll({
+      attributes: ['vehicleNumber'],
+      where: { status: 'registered' }, // adjust if status value differs, or remove if not needed
+      order: [['vehicleNumber', 'ASC']]
+    });
+    const vehicleNumbers = vehicles.map(v => v.vehicleNumber);
+    res.json(vehicleNumbers);
+  } catch (error) {
+    console.error('Error fetching vehicle numbers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 exports.getAllVehicles = async (req, res) => {
   try {
     const vehicles = await Vehicle.findAll();
