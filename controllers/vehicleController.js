@@ -12,7 +12,16 @@ exports.getAllVehicles = async (req, res) => {
 
 exports.createVehicle = async (req, res) => {
   try {
-    const { vehicleNumber, make, model, type, status, registeredBy } = req.body;
+    const {
+      vehicleNumber,
+      make,
+      model,
+      type,
+      costCentre,
+      department,
+      status,
+      registeredBy,
+    } = req.body;
 
     if (!vehicleNumber) {
       return res
@@ -25,6 +34,8 @@ exports.createVehicle = async (req, res) => {
       make,
       model,
       type,
+      costCentre,
+      department,
       status,
       registeredBy,
     });
@@ -53,47 +64,6 @@ exports.getVehicleById = async (req, res) => {
     res.json(vehicle);
   } catch (error) {
     console.error("Error fetching vehicle:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// Auto-suggest vehicle numbers based on search term
-exports.searchVehicleNumbers = async (req, res) => {
-  try {
-    const { search } = req.query;
-    
-    if (!search || search.trim().length < 1) {
-      return res.json([]);
-    }
-
-    const searchTerm = search.trim().toUpperCase();
-    
-    // Use Sequelize to search for vehicle numbers that contain the search term
-    const vehicles = await Vehicle.findAll({
-      attributes: ['vehicleNumber', 'make', 'model', 'type', 'department', 'costCentre'],
-      where: {
-        vehicleNumber: {
-          [require('sequelize').Op.like]: `%${searchTerm}%`
-        }
-      },
-      order: [['vehicleNumber', 'ASC']],
-      limit: 10 // Limit to 10 suggestions
-    });
-
-    // Format the response to include vehicle details for better UX
-    const suggestions = vehicles.map(vehicle => ({
-      vehicleNumber: vehicle.vehicleNumber,
-      make: vehicle.make,
-      model: vehicle.model,
-      type: vehicle.type,
-      department: vehicle.department,
-      costCentre: vehicle.costCentre,
-      displayText: `${vehicle.vehicleNumber} - ${vehicle.make} ${vehicle.model}${vehicle.type ? ` (${vehicle.type})` : ''}`
-    }));
-
-    res.json(suggestions);
-  } catch (error) {
-    console.error("Error searching vehicle numbers:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
