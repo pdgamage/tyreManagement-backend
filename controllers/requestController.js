@@ -473,17 +473,28 @@ exports.updateRequestStatus = async (req, res) => {
 exports.getRequestsByUser = async (req, res) => {
   try {
     const userId = req.params.id;
+    const { vehicleNumber } = req.query; // Get vehicle number filter from query params
 
-    // Use raw SQL to join with vehicles table to get department information
-    const [requests] = await pool.query(
-      `
+    // Base SQL query
+    let sqlQuery = `
       SELECT
-  r.*
-FROM requests r
-ORDER BY r.submittedAt DESC
-    `,
-      [userId]
-    );
+        r.*
+      FROM requests r
+      WHERE r.userId = ?
+    `;
+    
+    let queryParams = [userId];
+
+    // Add vehicle number filter if provided
+    if (vehicleNumber && vehicleNumber.trim() !== '') {
+      sqlQuery += ` AND r.vehicleNumber LIKE ?`;
+      queryParams.push(`%${vehicleNumber.trim()}%`);
+    }
+
+    sqlQuery += ` ORDER BY r.submittedAt DESC`;
+
+    // Execute the query
+    const [requests] = await pool.query(sqlQuery, queryParams);
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
@@ -506,7 +517,11 @@ ORDER BY r.submittedAt DESC
       })
     );
 
-    res.json(requestsWithImages);
+    res.json({
+      requests: requestsWithImages,
+      totalRequests: requestsWithImages.length,
+      filteredBy: vehicleNumber ? { vehicleNumber } : null
+    });
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: "Internal server error" });
