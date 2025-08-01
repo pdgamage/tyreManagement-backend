@@ -217,36 +217,6 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
-// Get all requests by vehicle number
-exports.getRequestsByVehicleNumber = async (req, res) => {
-  try {
-    const { vehicleNumber } = req.params;
-    if (!vehicleNumber) {
-      return res.status(400).json({ error: "Vehicle number is required" });
-    }
-    // Use raw SQL to join with vehicles table to get department information
-    const [requests] = await pool.query(`
-      SELECT r.* FROM requests r WHERE r.vehicleNumber = ? ORDER BY r.submittedAt DESC
-    `, [vehicleNumber]);
-
-    // Fetch images for each request
-    const requestsWithImages = await Promise.all(
-      requests.map(async (request) => {
-        const images = await RequestImage.findAll({
-          where: { requestId: request.id },
-          order: [["imageIndex", "ASC"]],
-        });
-        const imageUrls = images.map((img) => img.imagePath);
-        return { ...request, images: imageUrls };
-      })
-    );
-    res.json(requestsWithImages);
-  } catch (error) {
-    console.error("Error in getRequestsByVehicleNumber:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
 exports.updateRequest = async (req, res) => {
   try {
     const requestId = req.params.id;
