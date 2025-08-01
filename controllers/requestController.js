@@ -510,7 +510,7 @@ exports.checkVehicleRestrictions = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplierId, orderNotes } = req.body;
+    const { supplierId, orderNotes, orderNumber } = req.body;
 
     console.log(`Placing order for request ${id} with supplier ${supplierId}`);
 
@@ -580,15 +580,14 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update request status to "order placed"
-    // Try different update strategies based on available columns
+    // Update request with order details
     try {
-      // First try with all columns
+      // First try with all columns including order number and notes
       await pool.query(
-        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
-        ["order placed", id]
+        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW(), order_number = ?, order_notes = ? WHERE id = ?",
+        ["order placed", orderNumber || null, orderNotes || null, id]
       );
-      console.log("Updated request with all columns");
+      console.log("Updated request with order details");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
       try {
@@ -623,6 +622,7 @@ exports.placeOrder = async (req, res) => {
       },
       emailResult: emailResult,
       orderNotes: orderNotes,
+      orderNumber: orderNumber || null,
     });
   } catch (err) {
     console.error("Error placing order:", err);
