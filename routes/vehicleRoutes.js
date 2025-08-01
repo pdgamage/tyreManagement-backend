@@ -5,9 +5,6 @@ const vehicleController = require('../controllers/vehicleController');
 // Get all vehicles
 router.get('/', vehicleController.getAllVehicles);
 
-// Get all registered vehicle numbers (auto-suggest)
-router.get('/numbers', vehicleController.getVehicleNumbers);
-
 // Create a new vehicle
 router.post('/', vehicleController.createVehicle);
 
