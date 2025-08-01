@@ -592,13 +592,31 @@ exports.checkVehicleRestrictions = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplierId } = req.body;
+    const { 
+      supplierId,
+      supplierName,
+      supplierEmail,
+      supplierPhone,
+      orderNumber,
+      orderNotes
+    } = req.body;
 
     console.log(`Placing order for request ${id} with supplier ${supplierId}`);
+    console.log("Order details:", {
+      orderNumber,
+      orderNotes,
+      supplierName,
+      supplierEmail,
+      supplierPhone
+    });
 
     // Validate required fields
     if (!supplierId) {
       return res.status(400).json({ error: "Supplier ID is required" });
+    }
+    
+    if (!orderNumber) {
+      return res.status(400).json({ error: "Order number is required" });
     }
 
     // Get the request details
@@ -651,6 +669,17 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
+    // Get order details from request body
+    const { supplierName, supplierEmail, supplierPhone, orderNumber, orderNotes } = req.body;
+    
+    console.log("Order details received:", {
+      orderNumber,
+      orderNotes,
+      supplierName,
+      supplierEmail,
+      supplierPhone
+    });
+
     // Send order email to supplier
     let emailResult;
     try {
@@ -682,17 +711,15 @@ exports.placeOrder = async (req, res) => {
     });
 
     try {
-      await pool.query(
-        `UPDATE requests SET 
-         status = ?, 
-         supplierName = ?, 
-         supplierPhone = ?, 
-         supplierEmail = ?,
-         orderNumber = ?,
-         orderNotes = ?
-         WHERE id = ?`,
-        ["order placed", supplierName, supplierPhone, supplierEmail, orderNumber, orderNotes, id]
-      );
+      // Use Sequelize model to update
+      await request.update({
+        status: "order placed",
+        supplierName: orderData.supplierName,
+        supplierPhone: orderData.supplierPhone,
+        supplierEmail: orderData.supplierEmail,
+        orderNumber: orderData.orderNumber,
+        orderNotes: orderData.orderNotes || null
+      });
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
       console.error(
