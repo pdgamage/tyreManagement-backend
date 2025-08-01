@@ -54,18 +54,16 @@ exports.createRequest = async (req, res) => {
 
     // Additional validation for phone number (max 10 digits, no leading zeros)
     if (requestData.requesterPhone) {
-      const phoneDigits = requestData.requesterPhone.replace(/\D/g, '');
+      const phoneDigits = requestData.requesterPhone.replace(/\D/g, "");
       if (phoneDigits.length === 0) {
-        return res
-          .status(400)
-          .json({ error: "Phone number is required" });
+        return res.status(400).json({ error: "Phone number is required" });
       }
       if (phoneDigits.length > 10) {
         return res
           .status(400)
           .json({ error: "Phone number cannot exceed 10 digits" });
       }
-      if (phoneDigits.startsWith('0')) {
+      if (phoneDigits.startsWith("0")) {
         return res
           .status(400)
           .json({ error: "Phone number cannot start with zero" });
@@ -83,10 +81,14 @@ exports.createRequest = async (req, res) => {
       where: {
         vehicleNumber: requestData.vehicleNumber,
         status: {
-          [require('sequelize').Op.notIn]: ['rejected', 'complete', 'order placed']
-        }
+          [require("sequelize").Op.notIn]: [
+            "rejected",
+            "complete",
+            "order placed",
+          ],
+        },
       },
-      order: [['submittedAt', 'DESC']]
+      order: [["submittedAt", "DESC"]],
     });
 
     // Check for pending requests
@@ -94,7 +96,7 @@ exports.createRequest = async (req, res) => {
       return res.status(400).json({
         error: `Vehicle ${requestData.vehicleNumber} already has a pending tire request. Please wait for the current request to be processed before submitting a new one.`,
         existingRequestId: existingRequests[0].id,
-        existingRequestStatus: existingRequests[0].status
+        existingRequestStatus: existingRequests[0].status,
       });
     }
 
@@ -106,22 +108,24 @@ exports.createRequest = async (req, res) => {
       where: {
         vehicleNumber: requestData.vehicleNumber,
         status: {
-          [require('sequelize').Op.in]: ['complete', 'order placed']
+          [require("sequelize").Op.in]: ["complete", "order placed"],
         },
         submittedAt: {
-          [require('sequelize').Op.gte]: thirtyDaysAgo
-        }
+          [require("sequelize").Op.gte]: thirtyDaysAgo,
+        },
       },
-      order: [['submittedAt', 'DESC']]
+      order: [["submittedAt", "DESC"]],
     });
 
     if (recentCompletedRequests.length > 0) {
       const lastRequest = recentCompletedRequests[0];
-      const daysSinceLastRequest = Math.ceil((new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24));
+      const daysSinceLastRequest = Math.ceil(
+        (new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24)
+      );
       return res.status(400).json({
         error: `Vehicle ${requestData.vehicleNumber} had a tire request completed ${daysSinceLastRequest} days ago. Please wait at least 30 days between tire requests for the same vehicle.`,
         lastRequestDate: lastRequest.submittedAt,
-        daysRemaining: 30 - daysSinceLastRequest
+        daysRemaining: 30 - daysSinceLastRequest,
       });
     }
 
@@ -155,12 +159,9 @@ exports.getAllRequests = async (req, res) => {
     // Use raw SQL to join with vehicles table to get department information
     const [requests] = await pool.query(`
       SELECT
-        r.*,
-        v.department as vehicleDepartment,
-        v.costCentre as vehicleCostCentre
-      FROM requests r
-      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
-      ORDER BY r.submittedAt DESC
+  r.*
+FROM requests r
+ORDER BY r.submittedAt DESC
     `);
 
     // Fetch images for each request
@@ -175,9 +176,9 @@ exports.getAllRequests = async (req, res) => {
         // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
-          images: imageUrls
+          userSection: request.userSection || null,
+          costCenter: request.costCenter || null,
+          images: imageUrls,
         };
 
         return departmentInfo;
@@ -212,6 +213,81 @@ exports.getRequestById = async (req, res) => {
     res.json({ ...request.toJSON(), images: imageUrls });
   } catch (error) {
     console.error("Error in getRequestById:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.updateRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const updateData = req.body;
+
+    // Find the existing request
+    const existingRequest = await Request.findByPk(requestId);
+    if (!existingRequest) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Check if request is in pending status (only pending requests can be edited)
+    if (existingRequest.status !== "pending") {
+      return res.status(400).json({
+        error: "Only pending requests can be edited",
+      });
+    }
+
+    // Update the request with new data
+    const updatedRequest = await existingRequest.update({
+      vehicleNumber: updateData.vehicleNumber,
+      vehicleId: updateData.vehicleId,
+      vehicleBrand: updateData.vehicleBrand,
+      vehicleModel: updateData.vehicleModel,
+      tireSizeRequired: updateData.tireSizeRequired,
+      quantity: updateData.quantity,
+      tubesQuantity: updateData.tubesQuantity,
+      requestReason: updateData.requestReason,
+      requesterName: updateData.requesterName,
+      requesterEmail: updateData.requesterEmail,
+      requesterPhone: updateData.requesterPhone,
+      userSection: updateData.userSection,
+      lastReplacementDate: updateData.lastReplacementDate,
+      existingTireMake: updateData.existingTireMake,
+      costCenter: updateData.costCenter,
+      presentKmReading: updateData.presentKmReading,
+      previousKmReading: updateData.previousKmReading,
+      tireWearPattern: updateData.tireWearPattern,
+      comments: updateData.comments,
+      supervisorId: updateData.supervisorId,
+      deliveryOfficeName: updateData.deliveryOfficeName,
+      deliveryStreetName: updateData.deliveryStreetName,
+      deliveryTown: updateData.deliveryTown,
+      totalPrice: updateData.totalPrice,
+      warrantyDistance: updateData.warrantyDistance,
+      tireWearIndicatorAppeared: updateData.tireWearIndicatorAppeared,
+    });
+
+    // Handle image updates if provided
+    if (updateData.images && updateData.images.length > 0) {
+      // Delete existing images
+      await RequestImage.destroy({
+        where: { requestId: requestId },
+      });
+
+      // Add new images
+      for (let i = 0; i < updateData.images.length; i++) {
+        await RequestImage.create({
+          requestId: requestId,
+          imagePath: updateData.images[i],
+          imageIndex: i,
+        });
+      }
+    }
+
+    res.json({
+      message: "Request updated successfully",
+      request: updatedRequest,
+    });
+  } catch (error) {
+    console.error("Error updating request:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -258,10 +334,7 @@ exports.updateRequestStatus = async (req, res) => {
     request.status = status;
 
     // Save notes to the correct column
-    if (
-      status === "supervisor approved" ||
-      status === "supervisor rejected"
-    ) {
+    if (status === "supervisor approved" || status === "supervisor rejected") {
       request.supervisor_notes = notes;
       // Store the supervisor ID who made the decision
       if (userId) {
@@ -402,16 +475,15 @@ exports.getRequestsByUser = async (req, res) => {
     const userId = req.params.id;
 
     // Use raw SQL to join with vehicles table to get department information
-    const [requests] = await pool.query(`
+    const [requests] = await pool.query(
+      `
       SELECT
-        r.*,
-        v.department as vehicleDepartment,
-        v.costCentre as vehicleCostCentre
-      FROM requests r
-      LEFT JOIN vehicles v ON r.vehicleNumber = v.vehicleNumber
-      WHERE r.userId = ?
-      ORDER BY r.submittedAt DESC
-    `, [userId]);
+  r.*
+FROM requests r
+ORDER BY r.submittedAt DESC
+    `,
+      [userId]
+    );
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
@@ -425,9 +497,9 @@ exports.getRequestsByUser = async (req, res) => {
         // Only use actual department information, don't add defaults
         const departmentInfo = {
           ...request,
-          userSection: request.Department || request.vehicleDepartment || request.userSection || null,
-          costCenter: request.CostCenter || request.vehicleCostCentre || request.costCenter || null,
-          images: imageUrls
+          userSection: request.userSection || null,
+          costCenter: request.costCenter || null,
+          images: imageUrls,
         };
 
         return departmentInfo;
@@ -443,7 +515,8 @@ exports.getRequestsByUser = async (req, res) => {
 
 exports.checkVehicleRestrictions = async (req, res) => {
   try {
-    const { vehicleNumber } = req.params;
+    const { vehicleId } = req.params;
+    const vehicleNumber = vehicleId; // Keep the same logic
 
     if (!vehicleNumber) {
       return res.status(400).json({ error: "Vehicle number is required" });
@@ -454,19 +527,23 @@ exports.checkVehicleRestrictions = async (req, res) => {
       where: {
         vehicleNumber: vehicleNumber,
         status: {
-          [require('sequelize').Op.notIn]: ['rejected', 'complete', 'order placed']
-        }
+          [require("sequelize").Op.notIn]: [
+            "rejected",
+            "complete",
+            "order placed",
+          ],
+        },
       },
-      order: [['submittedAt', 'DESC']]
+      order: [["submittedAt", "DESC"]],
     });
 
     if (existingRequests.length > 0) {
       return res.json({
         restricted: true,
-        type: 'pending',
+        type: "pending",
         message: `Vehicle ${vehicleNumber} already has a pending tire request. Please wait for the current request to be processed before submitting a new one.`,
         existingRequestId: existingRequests[0].id,
-        existingRequestStatus: existingRequests[0].status
+        existingRequestStatus: existingRequests[0].status,
       });
     }
 
@@ -478,33 +555,34 @@ exports.checkVehicleRestrictions = async (req, res) => {
       where: {
         vehicleNumber: vehicleNumber,
         status: {
-          [require('sequelize').Op.in]: ['complete', 'order placed']
+          [require("sequelize").Op.in]: ["complete", "order placed"],
         },
         submittedAt: {
-          [require('sequelize').Op.gte]: thirtyDaysAgo
-        }
+          [require("sequelize").Op.gte]: thirtyDaysAgo,
+        },
       },
-      order: [['submittedAt', 'DESC']]
+      order: [["submittedAt", "DESC"]],
     });
 
     if (recentCompletedRequests.length > 0) {
       const lastRequest = recentCompletedRequests[0];
-      const daysSinceLastRequest = Math.ceil((new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24));
+      const daysSinceLastRequest = Math.ceil(
+        (new Date() - new Date(lastRequest.submittedAt)) / (1000 * 60 * 60 * 24)
+      );
       return res.json({
         restricted: true,
-        type: 'recent',
+        type: "recent",
         message: `Vehicle ${vehicleNumber} had a tire request completed ${daysSinceLastRequest} days ago. Please wait at least 30 days between tire requests for the same vehicle.`,
         lastRequestDate: lastRequest.submittedAt,
-        daysRemaining: 30 - daysSinceLastRequest
+        daysRemaining: 30 - daysSinceLastRequest,
       });
     }
 
     // No restrictions found
     res.json({
       restricted: false,
-      message: "Vehicle is eligible for a new tire request"
+      message: "Vehicle is eligible for a new tire request",
     });
-
   } catch (error) {
     console.error("Error checking vehicle restrictions:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -563,7 +641,7 @@ exports.placeOrder = async (req, res) => {
       id: supplier.id,
       name: supplier.name,
       phone: supplier.phone,
-      email: supplier.email
+      email: supplier.email,
     });
 
     // Validate supplier has FormsFree key
@@ -596,7 +674,7 @@ exports.placeOrder = async (req, res) => {
       requestId: id,
       supplierName: supplier.name,
       supplierPhone: supplier.phone,
-      supplierEmail: supplier.email
+      supplierEmail: supplier.email,
     });
 
     try {
@@ -611,10 +689,16 @@ exports.placeOrder = async (req, res) => {
       );
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
-      console.error("Failed to update request with supplier details:", updateError.message);
+      console.error(
+        "Failed to update request with supplier details:",
+        updateError.message
+      );
       // Try status only as fallback
       try {
-        await pool.query("UPDATE requests SET status = ? WHERE id = ?", ["order placed", id]);
+        await pool.query("UPDATE requests SET status = ? WHERE id = ?", [
+          "order placed",
+          id,
+        ]);
         console.log("Fallback: Updated status only");
       } catch (fallbackError) {
         console.error("Fallback update also failed:", fallbackError.message);
@@ -629,7 +713,7 @@ exports.placeOrder = async (req, res) => {
         id: supplier.id,
         name: supplier.name,
         email: supplier.email,
-        phone: supplier.phone
+        phone: supplier.phone,
       },
       emailResult: emailResult,
       orderNotes: orderNotes,
@@ -679,4 +763,3 @@ exports.deleteRequest = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-

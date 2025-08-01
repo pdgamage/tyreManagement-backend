@@ -27,3 +27,5 @@ ALTER TABLE requests ADD FOREIGN KEY (engineer_decision_by) REFERENCES users(id)
 
 ALTER TABLE requests ADD COLUMN technical_manager_id INT NULL;
 ALTER TABLE requests ADD FOREIGN KEY (technical_manager_id) REFERENCES users(id);
+ALTER TABLE users ADD COLUMN costCentre VARCHAR(100), ADD COLUMN department VARCHAR(100);
+ALTER TABLE vehicles DROP COLUMN costCentre, DROP COLUMN department;

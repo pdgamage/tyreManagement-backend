@@ -10,7 +10,7 @@ const TireDetails = sequelize.define(
       autoIncrement: true,
     },
     tire_size: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(100), // was DataTypes.TEXT
       allowNull: true,
     },
     tire_brand: {

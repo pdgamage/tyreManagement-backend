@@ -8,15 +8,37 @@ const { syncAndAlterDatabase } = require("./config/db");
 const app = express();
 
 // Sync and alter database schema before starting the server
-syncAndAlterDatabase();
+// Don't block server startup if this fails
+syncAndAlterDatabase().catch((error) => {
+  console.error("Database schema alteration failed:", error);
+  console.log("Server will continue starting...");
+});
+
+// CORS Configuration
+const corsOptions = {
+  origin: [
+    "https://tyre-management-frontend.vercel.app",
+    "https://tyremanagement-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Cache-Control",
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
 
 // Middleware
-app.use(
-  cors({
-    origin: "https://tyre-management-frontend.vercel.app",
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Enable preflight for all routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -37,7 +59,12 @@ app.use("/api/users", userRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is running" });
+  res.json({
+    status: "OK",
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+  });
 });
 
 app.get(
@@ -47,6 +74,11 @@ app.get(
     res.json({ user: req.user });
   }
 );
+
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+  res.status(404).json({ error: "Route not found" });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

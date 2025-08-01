@@ -10,6 +10,8 @@ const UserModel = sequelize.define(
     email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
     name: { type: DataTypes.STRING(255) },
     role: { type: DataTypes.STRING(50) },
+    costCentre: { type: DataTypes.STRING(100) },
+    department: { type: DataTypes.STRING(100) },
   },
   {
     tableName: "users",

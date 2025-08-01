@@ -1,9 +1,21 @@
 require("dotenv").config();
+
+// Validate required environment variables
+const requiredEnvVars = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
+const missingEnvVars = requiredEnvVars.filter(
+  (varName) => !process.env[varName]
+);
+
+if (missingEnvVars.length > 0) {
+  console.error("Missing required environment variables:", missingEnvVars);
+  console.log("Server will start but database functionality may not work.");
+}
+
 const app = require("./app");
 const { sequelize, pool } = require("./config/db"); // Correct import
 require("./models"); // Loads all models and associations
-const requestRoutes = require("./routes/requestRoutes");
-const vehicleRoutes = require("./routes/vehicleRoutes");
+// const requestRoutes = require("./routes/requestRoutes"); // Removed - routes handled in app.js
+// const vehicleRoutes = require("./routes/vehicleRoutes"); // Removed - routes handled in app.js
 // const sseRoutes = require("./routes/sseRoutes"); // Disabled
 // const websocketService = require("./services/websocketService"); // Disabled
 const http = require("http");
@@ -27,13 +39,13 @@ async function testDbConnection() {
     console.log("MySQL pool connection has been established successfully.");
   } catch (error) {
     console.error("Unable to connect to the MySQL pool:", error);
-    process.exit(1);
+    throw error; // Let the caller handle the error
   }
 }
 
-// Middleware for routes
-app.use("/api", requestRoutes);
-app.use("/api", vehicleRoutes);
+// Routes are already defined in app.js, no need to mount them again here
+// app.use("/api", requestRoutes); // Removed - already mounted in app.js
+// app.use("/api", vehicleRoutes); // Removed - already mounted in app.js
 // app.use("/api/sse", sseRoutes); // Disabled
 
 // Create HTTP server
@@ -43,18 +55,28 @@ const server = http.createServer(app);
 // websocketService.initialize(server);
 
 // Start server
-server.listen(port, async () => {
+server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
   console.log(`WebSocket server initialized`);
-  await testDbConnection();
+
+  // Initialize database after server starts
+  initializeDatabase();
 });
 
-// Sync models
-sequelize
-  .sync({ alter: true })
-  .then(() => {
+// Initialize database function
+async function initializeDatabase() {
+  try {
+    console.log("Initializing database...");
+
+    // Test database connection
+    await testDbConnection();
+
+    // Sync models
+    await sequelize.sync({ alter: true });
     console.log("Database & tables synced!");
-  })
-  .catch((err) => {
-    console.error("Unable to sync database:", err);
-  });
+  } catch (error) {
+    console.error("Database initialization failed:", error);
+    // Don't exit the process - server can still handle health checks
+    console.log("Server will continue running without database...");
+  }
+}

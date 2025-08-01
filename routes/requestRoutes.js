@@ -32,13 +32,17 @@ router.get("/:id", requestController.getRequestById);
 // Update request status
 router.put("/:id/status", requestController.updateRequestStatus);
 
+// Update entire request (for editing pending requests)
+router.put("/:id", requestController.updateRequest);
+
 // Get requests by user
 router.get("/user/:id", requestController.getRequestsByUser);
 
 // Check vehicle request restrictions
-router.get("/vehicle/:vehicleNumber/restrictions", requestController.checkVehicleRestrictions);
-
-
+router.get(
+  "/vehicle/:vehicleId/restrictions",
+  requestController.checkVehicleRestrictions
+);
 
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
