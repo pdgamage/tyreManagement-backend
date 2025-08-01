@@ -711,15 +711,31 @@ exports.placeOrder = async (req, res) => {
     });
 
     try {
-      // Use Sequelize model to update
-      await request.update({
-        status: "order placed",
-        supplierName: orderData.supplierName,
-        supplierPhone: orderData.supplierPhone,
-        supplierEmail: orderData.supplierEmail,
-        orderNumber: orderData.orderNumber,
-        orderNotes: orderData.orderNotes || null
-      });
+      // Update using direct SQL query to ensure all fields are updated
+      const updateQuery = `
+        UPDATE requests 
+        SET 
+          status = 'order placed',
+          supplierName = ?,
+          supplierPhone = ?,
+          supplierEmail = ?,
+          orderNumber = ?,
+          orderNotes = ?
+        WHERE id = ?
+      `;
+      
+      const updateValues = [
+        orderData.supplierName,
+        orderData.supplierPhone,
+        orderData.supplierEmail,
+        orderData.orderNumber,
+        orderData.orderNotes,
+        id
+      ];
+
+      console.log('Executing update query:', { query: updateQuery, values: updateValues });
+      
+      await pool.query(updateQuery, updateValues);
       console.log("Successfully updated request with supplier details");
     } catch (updateError) {
       console.error(
