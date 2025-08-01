@@ -125,6 +125,15 @@ const Request = sequelize.define(
       allowNull: true,
       field: 'CostCenter', // Maps to the CostCenter column in database
     },
+    // Order fields
+    orderNumber: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    orderNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     tableName: "requests",
