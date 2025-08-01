@@ -5,6 +5,12 @@ async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
+    // Debug log for order number
+    console.log('Request object order number:', {
+      orderNumber: request.orderNumber,
+      requestId: request.id
+    });
+    
     // Create email subject
     const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
 
