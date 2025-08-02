@@ -576,11 +576,9 @@ exports.placeOrder = async (req, res) => {
 
     // Get supplier details
     const [suppliers] = await pool.query(
-      "SELECT id, name, email, contact_number FROM supplier WHERE id = ?",
+      "SELECT * FROM supplier WHERE id = ?",
       [supplierId]
     );
-    
-    console.log("Fetched supplier details:", suppliers[0]);
     if (suppliers.length === 0) {
       return res.status(404).json({ error: "Supplier not found" });
     }
@@ -590,7 +588,6 @@ exports.placeOrder = async (req, res) => {
     const supplierDetails = {
       name: supplier.name,
       email: supplier.email,
-      contact_number: supplier.contact_number,
       contact_number: supplier.contact_number
     };
 
@@ -621,11 +618,6 @@ exports.placeOrder = async (req, res) => {
 
     // Update request status to "order placed" and save order details
     try {
-      // Prepare supplier phone (ensure it's not undefined)
-      const supplierPhone = supplier.contact_number || '';
-      
-      console.log("Updating request with supplier phone:", supplierPhone);
-
       // Update the request with order details and supplier information
       await pool.query(`
         UPDATE requests 
@@ -642,7 +634,7 @@ exports.placeOrder = async (req, res) => {
         orderNotes,
         supplier.name,
         supplier.email,
-        supplierPhone,
+        supplier.contact_number,
         id
       ]);
 
