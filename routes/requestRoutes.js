@@ -47,6 +47,9 @@ router.get(
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
+// Search requests by vehicle number
+router.get("/search/vehicle/:vehicleNumber", requestController.searchRequestsByVehicle);
+
 // Delete a request
 router.delete("/:id", requestController.deleteRequest);
 

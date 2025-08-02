@@ -742,3 +742,64 @@ exports.deleteRequest = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.searchRequestsByVehicle = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+
+    if (!vehicleNumber) {
+      return res.status(400).json({ error: "Vehicle number is required" });
+    }
+
+    // Search for all requests for this vehicle
+    const [requests] = await pool.query(`
+      SELECT r.*
+      FROM requests r
+      WHERE r.vehicleNumber = ?
+      ORDER BY r.submittedAt DESC
+    `, [vehicleNumber]);
+
+    if (requests.length === 0) {
+      return res.status(404).json({ 
+        error: "No requests found for this vehicle",
+        vehicleNumber 
+      });
+    }
+
+    // Process each request to include images and format supplier details
+    const requestsWithDetails = await Promise.all(
+      requests.map(async (request) => {
+        // Get images for the request
+        const images = await RequestImage.findAll({
+          where: { requestId: request.id },
+          order: [["imageIndex", "ASC"]],
+        });
+        const imageUrls = images.map((img) => img.imagePath);
+
+        // Format supplier details if order has been placed
+        let supplierDetails = null;
+        if (request.status === 'order placed' && request.supplierName) {
+          supplierDetails = {
+            name: request.supplierName,
+            email: request.supplierEmail,
+            phone: request.supplierPhone,
+            orderNumber: request.orderNumber,
+            orderNotes: request.orderNotes,
+            orderTimestamp: request.order_timestamp
+          };
+        }
+
+        return {
+          ...request,
+          images: imageUrls,
+          supplierDetails
+        };
+      })
+    );
+
+    res.json(requestsWithDetails);
+  } catch (error) {
+    console.error("Error searching requests by vehicle:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
