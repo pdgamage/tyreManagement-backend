@@ -566,6 +566,19 @@ exports.placeOrder = async (req, res) => {
       orderNotes: orderNotes
     });
 
+    // Save the supplier details to the request
+    const { supplierName, supplierEmail, supplierPhone } = req.body;
+    
+    // Update request with supplier details and order information
+    await request.update({
+      supplierName,
+      supplierEmail,
+      supplierPhone,
+      orderNumber,
+      orderNotes,
+      status: "order placed"
+    });
+
     // Check if request is complete (ready for order)
     if (request.status !== "complete") {
       return res.status(400).json({
