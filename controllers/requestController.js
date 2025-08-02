@@ -574,11 +574,7 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Get supplier details from the request body
-    const { supplierName, supplierEmail, supplierPhone } = req.body;
-    console.log("Supplier details from request body:", { supplierName, supplierEmail, supplierPhone });
-
-    // Get supplier details from database for verification
+    // Get supplier details
     const [suppliers] = await pool.query(
       "SELECT * FROM supplier WHERE id = ?",
       [supplierId]
@@ -587,6 +583,13 @@ exports.placeOrder = async (req, res) => {
       return res.status(404).json({ error: "Supplier not found" });
     }
     const supplier = suppliers[0];
+
+    // Store supplier details for later use in request update
+    const supplierDetails = {
+      name: supplier.name,
+      email: supplier.email,
+      contact_number: supplier.contact_number
+    };
 
     // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
@@ -624,28 +627,38 @@ exports.placeOrder = async (req, res) => {
           orderNotes = ?,
           supplierName = ?,
           supplierEmail = ?,
-          supplierPhone = ?,
-          order_placed = true,
-          order_timestamp = NOW()
+          supplierPhone = ?
         WHERE id = ?
       `, [
         orderNumber,
         orderNotes,
-        supplierName,
-        supplierEmail,
-        supplierPhone,
+        supplier.name,
+        supplier.email,
+        supplier.contact_number,
         id
       ]);
 
       console.log("Successfully saved order details:", {
         orderNumber,
         orderNotes,
-        supplierName,
-        supplierEmail,
-        supplierPhone,
+        supplierName: supplier.name,
+        supplierEmail: supplier.email,
+        supplierPhone: supplier.contact_number,
         id,
         status: "order placed"
       });
+      // First try with all columns including order number and notes
+      await pool.query(
+        `UPDATE requests 
+         SET status = ?,
+             order_placed = true,
+             order_timestamp = NOW(),
+             order_number = ?,
+             order_notes = ?,
+             customer_officer_note = ?
+         WHERE id = ?`,
+        ["order placed", orderNumber, orderNotes, orderNotes, id]
+      );
       console.log("Updated request with all columns including order details");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
@@ -676,12 +689,10 @@ exports.placeOrder = async (req, res) => {
       message: "Order placed successfully",
       supplier: {
         id: supplier.id,
-        name: supplierName,
-        email: supplierEmail,
-        phone: supplierPhone
+        name: supplier.name,
+        email: supplier.email,
       },
       emailResult: emailResult,
-      orderNumber: orderNumber,
       orderNotes: orderNotes,
     });
   } catch (err) {
@@ -699,12 +710,10 @@ exports.placeOrder = async (req, res) => {
         message: "Order placed successfully (email sent)",
         supplier: {
           id: supplier.id,
-          name: supplierName,
-          email: supplierEmail,
-          phone: supplierPhone
+          name: supplier.name,
+          email: supplier.email,
         },
         emailResult: emailResult,
-        orderNumber: orderNumber,
         orderNotes: orderNotes,
         warning:
           "Database update had issues but order email was sent successfully",
