@@ -743,21 +743,66 @@ exports.deleteRequest = async (req, res) => {
   }
 };
 
+exports.getVehicleNumbers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    // Build SQL query for searching vehicle numbers
+    let sqlQuery = `
+      SELECT DISTINCT vehicleNumber 
+      FROM requests 
+      WHERE vehicleNumber LIKE ?
+      ORDER BY vehicleNumber 
+      LIMIT 10
+    `;
+    
+    const [vehicles] = await pool.query(sqlQuery, [`%${query}%`]);
+    res.json(vehicles.map(v => v.vehicleNumber));
+  } catch (error) {
+    console.error("Error fetching vehicle numbers:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.searchRequestsByVehicle = async (req, res) => {
   try {
     const { vehicleNumber } = req.params;
+    const { status, startDate, endDate, sortBy = 'submittedAt', sortOrder = 'DESC' } = req.query;
 
     if (!vehicleNumber) {
       return res.status(400).json({ error: "Vehicle number is required" });
     }
 
-    // Search for all requests for this vehicle
+    // Build the WHERE clause dynamically
+    let whereClause = 'WHERE r.vehicleNumber = ?';
+    const params = [vehicleNumber];
+
+    // Add status filter if provided
+    if (status) {
+      whereClause += ' AND r.status = ?';
+      params.push(status);
+    }
+
+    // Add date range filter if provided
+    if (startDate && endDate) {
+      whereClause += ' AND r.submittedAt BETWEEN ? AND ?';
+      params.push(startDate, endDate);
+    }
+
+    // Validate sort parameters
+    const allowedSortFields = ['submittedAt', 'status', 'order_timestamp'];
+    const allowedSortOrders = ['ASC', 'DESC'];
+    
+    const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'submittedAt';
+    const finalSortOrder = allowedSortOrders.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    // Search for requests with filters
     const [requests] = await pool.query(`
       SELECT r.*
       FROM requests r
-      WHERE r.vehicleNumber = ?
-      ORDER BY r.submittedAt DESC
-    `, [vehicleNumber]);
+      ${whereClause}
+      ORDER BY r.${finalSortBy} ${finalSortOrder}
+    `, params);
 
     if (requests.length === 0) {
       return res.status(404).json({ 
