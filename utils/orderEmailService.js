@@ -6,15 +6,57 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
     // Create email subject
-    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNumber} - Request #${request.id}`;
+    const emailSubject = `🚛 SLT Mobitel Tire Order - ${orderNumber}`;
 
-    // Add order details at the top of the message
+    // Create a professional email template
     const orderDetails = `
-ORDER DETAILS:
--------------
-Order Number: ${orderNumber}
-Order Notes: ${orderNotes || 'N/A'}
-Request ID: ${request.id}
+Dear ${supplier.name},
+
+We trust this email finds you well. Please find below an official tire order request from SLT Mobitel.
+
+╔══════════════════════════════════════════╗
+             ORDER DETAILS
+╚══════════════════════════════════════════╝
+
+🔹 Order Number: ${orderNumber}
+🔹 Request ID: ${request.id}
+
+VEHICLE INFORMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Vehicle Number: ${request.vehicleNumber}
+• Brand/Model: ${request.vehicleBrand} ${request.vehicleModel}
+
+PRODUCT SPECIFICATIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Tire Size Required: ${request.tireSizeRequired}
+• Quantity: ${request.quantity} tire(s) and ${request.tubesQuantity} tube(s)
+
+DELIVERY INFORMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${request.deliveryOfficeName ? `Office: ${request.deliveryOfficeName}` : ''}
+${request.deliveryStreetName ? `Street: ${request.deliveryStreetName}` : ''}
+${request.deliveryTown ? `Town: ${request.deliveryTown}` : ''}
+
+${orderNotes ? `ADDITIONAL NOTES:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${orderNotes}\n` : ''}
+
+We kindly request your best quotation for this order, including:
+• Unit price per tire/tube
+• Estimated delivery timeline
+• Warranty terms
+• Payment terms
+
+CONTACT INFORMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Requester: ${request.requesterName}
+Department: ${request.userSection}
+Phone: ${request.requesterPhone}
+Email: ${request.requesterEmail}
+
+Your prompt response would be greatly appreciated as we aim to maintain our fleet operations efficiently.
+
+Best regards,
+${request.requesterName}
+SLT Mobitel
 `;
 
 
