@@ -1,7 +1,31 @@
 const { sequelize } = require("../config/db");
 const { DataTypes } = require("sequelize");
 
-const Request = sequelize.define(
+cons    deliveryTown: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    // Order details
+    supplierName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    supplierEmail: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    supplierPhone: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    orderNumber: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    orderNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },quest = sequelize.define(
   "Request",
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
