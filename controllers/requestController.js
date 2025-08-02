@@ -566,19 +566,6 @@ exports.placeOrder = async (req, res) => {
       orderNotes: orderNotes
     });
 
-    // Save the supplier details to the request
-    const { supplierName, supplierEmail, supplierPhone } = req.body;
-    
-    // Update request with supplier details and order information
-    await request.update({
-      supplierName,
-      supplierEmail,
-      supplierPhone,
-      orderNumber,
-      orderNotes,
-      status: "order placed"
-    });
-
     // Check if request is complete (ready for order)
     if (request.status !== "complete") {
       return res.status(400).json({
@@ -587,7 +574,11 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Get supplier details
+    // Get supplier details from the request body
+    const { supplierName, supplierEmail, supplierPhone } = req.body;
+    console.log("Supplier details from request body:", { supplierName, supplierEmail, supplierPhone });
+
+    // Get supplier details from database for verification
     const [suppliers] = await pool.query(
       "SELECT * FROM supplier WHERE id = ?",
       [supplierId]
@@ -596,13 +587,6 @@ exports.placeOrder = async (req, res) => {
       return res.status(404).json({ error: "Supplier not found" });
     }
     const supplier = suppliers[0];
-
-    // Store supplier details for later use in request update
-    const supplierDetails = {
-      name: supplier.name,
-      email: supplier.email,
-      contact_number: supplier.contact_number
-    };
 
     // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
@@ -640,38 +624,28 @@ exports.placeOrder = async (req, res) => {
           orderNotes = ?,
           supplierName = ?,
           supplierEmail = ?,
-          supplierPhone = ?
+          supplierPhone = ?,
+          order_placed = true,
+          order_timestamp = NOW()
         WHERE id = ?
       `, [
         orderNumber,
         orderNotes,
-        supplier.name,
-        supplier.email,
-        supplier.contact_number,
+        supplierName,
+        supplierEmail,
+        supplierPhone,
         id
       ]);
 
       console.log("Successfully saved order details:", {
         orderNumber,
         orderNotes,
-        supplierName: supplier.name,
-        supplierEmail: supplier.email,
-        supplierPhone: supplier.contact_number,
+        supplierName,
+        supplierEmail,
+        supplierPhone,
         id,
         status: "order placed"
       });
-      // First try with all columns including order number and notes
-      await pool.query(
-        `UPDATE requests 
-         SET status = ?,
-             order_placed = true,
-             order_timestamp = NOW(),
-             order_number = ?,
-             order_notes = ?,
-             customer_officer_note = ?
-         WHERE id = ?`,
-        ["order placed", orderNumber, orderNotes, orderNotes, id]
-      );
       console.log("Updated request with all columns including order details");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
