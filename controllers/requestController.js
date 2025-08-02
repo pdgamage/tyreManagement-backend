@@ -213,6 +213,24 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
+exports.updateRequest = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const updateData = req.body;
+
+    const request = await Request.findByPk(id);
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    await request.update(updateData);
+    return res.json(request);
+  } catch (error) {
+    console.error("Error updating request:", error);
+    return res.status(500).json({ message: "Error updating request", error: error.message });
+  }
+};
+
 exports.updateRequestStatus = async (req, res) => {
   try {
     const { status, notes, role, userId } = req.body;
