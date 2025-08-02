@@ -676,10 +676,12 @@ exports.placeOrder = async (req, res) => {
       message: "Order placed successfully",
       supplier: {
         id: supplier.id,
-        name: supplier.name,
-        email: supplier.email,
+        name: supplierName,
+        email: supplierEmail,
+        phone: supplierPhone
       },
       emailResult: emailResult,
+      orderNumber: orderNumber,
       orderNotes: orderNotes,
     });
   } catch (err) {
@@ -697,10 +699,12 @@ exports.placeOrder = async (req, res) => {
         message: "Order placed successfully (email sent)",
         supplier: {
           id: supplier.id,
-          name: supplier.name,
-          email: supplier.email,
+          name: supplierName,
+          email: supplierEmail,
+          phone: supplierPhone
         },
         emailResult: emailResult,
+        orderNumber: orderNumber,
         orderNotes: orderNotes,
         warning:
           "Database update had issues but order email was sent successfully",
