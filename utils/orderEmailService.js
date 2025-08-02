@@ -78,9 +78,12 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     const professionalMessage = `
 Dear ${supplier.name},
 
-I hope this message finds you well. We are writing to request a quotation for tire supply to our vehicle fleet.
+I hope this message finds you well. We are sending a tire order request with the following details.
 
-We have an immediate requirement for the following specifications:
+ORDER DETAILS:
+Order Number: ${orderNumber}
+
+SPECIFICATIONS:
 
     • Order Number: ${orderNumber}
     • Vehicle Number: ${request.vehicleNumber}
