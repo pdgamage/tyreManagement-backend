@@ -1,12 +1,12 @@
 // Using isomorphic-fetch for Node.js compatibility
 const fetch = require('isomorphic-fetch');
 
-async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = '') {
+async function sendOrderEmail(supplier, request, orderNotes = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
     // Create email subject
-    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNumber} - Request #${request.id}`;
+    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
 
 
     // Handle different formats of formsfree_key
@@ -78,17 +78,12 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     const professionalMessage = `
 Dear ${supplier.name},
 
-I hope this message finds you well. This is an official tire order from SLT Mobitel.
+I hope this message finds you well. We are writing to request a quotation for tire supply to our vehicle fleet.
 
-ORDER DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ORDER NUMBER: ${orderNumber}
-REQUEST ID: ${request.id}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+We have an immediate requirement for the following specifications:
 
-PRODUCT SPECIFICATIONS:
-• Vehicle Number: ${request.vehicleNumber}
-• Tire Size Required: ${request.tireSizeRequired}
+    • Vehicle Number: ${request.vehicleNumber}
+    • Tire Size Required: ${request.tireSizeRequired}
     • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
 
 ${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service. Your prompt response would be highly valued as we aim to maintain our fleet operations efficiently.
