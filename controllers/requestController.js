@@ -589,10 +589,22 @@ exports.placeOrder = async (req, res) => {
     // Update request status to "order placed"
     // Try different update strategies based on available columns
     try {
-      console.log("Attempting to save order details:", { orderNumber, orderNotes, id });
+      console.log("Attempting to save order details:", {
+        orderNumber,
+        orderNotes,
+        id,
+        status: "order placed"
+      });
       // First try with all columns including order number and notes
       await pool.query(
-        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW(), order_number = ?, order_notes = ?, customer_officer_note = ? WHERE id = ?",
+        `UPDATE requests 
+         SET status = ?,
+             order_placed = true,
+             order_timestamp = NOW(),
+             order_number = ?,
+             order_notes = ?,
+             customer_officer_note = ?
+         WHERE id = ?`,
         ["order placed", orderNumber, orderNotes, orderNotes, id]
       );
       console.log("Updated request with all columns including order details");

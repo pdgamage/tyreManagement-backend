@@ -78,16 +78,17 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     const professionalMessage = `
 Dear ${supplier.name},
 
-I hope this message finds you well. We are sending a tire order request with the following details.
+I hope this message finds you well. This is an official tire order from SLT Mobitel.
 
 ORDER DETAILS:
-Order Number: ${orderNumber}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ORDER NUMBER: ${orderNumber}
+REQUEST ID: ${request.id}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SPECIFICATIONS:
-
-    • Order Number: ${orderNumber}
-    • Vehicle Number: ${request.vehicleNumber}
-    • Tire Size Required: ${request.tireSizeRequired}
+PRODUCT SPECIFICATIONS:
+• Vehicle Number: ${request.vehicleNumber}
+• Tire Size Required: ${request.tireSizeRequired}
     • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
 
 ${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service. Your prompt response would be highly valued as we aim to maintain our fleet operations efficiently.
