@@ -1,12 +1,12 @@
 // Using isomorphic-fetch for Node.js compatibility
 const fetch = require('isomorphic-fetch');
 
-async function sendOrderEmail(supplier, request, orderNotes = '') {
+async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = '') {
   try {
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
     // Create email subject
-    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Request #${request.id}`;
+    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNotes.orderNumber} - Request #${request.id}`;
 
 
     // Handle different formats of formsfree_key
@@ -82,6 +82,7 @@ I hope this message finds you well. We are writing to request a quotation for ti
 
 We have an immediate requirement for the following specifications:
 
+    • Order Number: ${orderNumber}
     • Vehicle Number: ${request.vehicleNumber}
     • Tire Size Required: ${request.tireSizeRequired}
     • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}

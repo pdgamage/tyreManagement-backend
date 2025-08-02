@@ -510,13 +510,17 @@ exports.checkVehicleRestrictions = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplierId, orderNotes } = req.body;
+    const { supplierId, orderNotes, orderNumber } = req.body;
 
-    console.log(`Placing order for request ${id} with supplier ${supplierId}`);
+    console.log(`Placing order for request ${id} with supplier ${supplierId} and order number ${orderNumber}`);
 
     // Validate required fields
     if (!supplierId) {
       return res.status(400).json({ error: "Supplier ID is required" });
+    }
+    
+    if (!orderNumber) {
+      return res.status(400).json({ error: "Order number is required" });
     }
 
     // Get the request details
@@ -535,6 +539,8 @@ exports.placeOrder = async (req, res) => {
       totalPrice: request.totalPrice,
       warrantyDistance: request.warrantyDistance,
       tireWearIndicatorAppeared: request.tireWearIndicatorAppeared,
+      orderNumber: orderNumber,
+      orderNotes: orderNotes
     });
 
     // Check if request is complete (ready for order)
@@ -565,7 +571,7 @@ exports.placeOrder = async (req, res) => {
     // Send order email to supplier
     let emailResult;
     try {
-      emailResult = await sendOrderEmail(supplier, request, orderNotes);
+      emailResult = await sendOrderEmail(supplier, request, orderNotes, orderNumber);
       console.log("Formspree email result:", emailResult);
     } catch (emailError) {
       console.error("Error sending email:", emailError);
@@ -583,12 +589,12 @@ exports.placeOrder = async (req, res) => {
     // Update request status to "order placed"
     // Try different update strategies based on available columns
     try {
-      // First try with all columns
+      // First try with all columns including order number and notes
       await pool.query(
-        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW() WHERE id = ?",
-        ["order placed", id]
+        "UPDATE requests SET status = ?, order_placed = true, order_timestamp = NOW(), order_number = ?, order_notes = ? WHERE id = ?",
+        ["order placed", orderNumber, orderNotes, id]
       );
-      console.log("Updated request with all columns");
+      console.log("Updated request with all columns including order details");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
       try {
