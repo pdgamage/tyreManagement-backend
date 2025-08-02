@@ -12,50 +12,51 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     const orderDetails = `
 Dear ${supplier.name},
 
-We trust this email finds you well. Please find below an official tire order request from SLT Mobitel.
+We trust this email finds you well. As a valued supplier of SLT Mobitel, we are pleased to submit this official tire order request for our fleet maintenance requirements.
 
-╔══════════════════════════════════════════╗
-             ORDER DETAILS
-╚══════════════════════════════════════════╝
+Purchase Order Details:
+Order Reference: ${orderNumber}
+Internal Request ID: ${request.id}
+Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 
-🔹 Order Number: ${orderNumber}
-🔹 Request ID: ${request.id}
+Vehicle Information:
+Registration Number: ${request.vehicleNumber}
+Make/Model: ${request.vehicleBrand} ${request.vehicleModel}
 
-VEHICLE INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Vehicle Number: ${request.vehicleNumber}
-• Brand/Model: ${request.vehicleBrand} ${request.vehicleModel}
+Required Products:
+• Tire Specification: ${request.tireSizeRequired}
+• Required Quantity: ${request.quantity} tire(s)${request.tubesQuantity > 0 ? ` with ${request.tubesQuantity} tube(s)` : ''}
 
-PRODUCT SPECIFICATIONS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Tire Size Required: ${request.tireSizeRequired}
-• Quantity: ${request.quantity} tire(s) and ${request.tubesQuantity} tube(s)
+Delivery Information:
+${request.deliveryOfficeName ? request.deliveryOfficeName : ''}
+${request.deliveryStreetName ? request.deliveryStreetName : ''}
+${request.deliveryTown ? request.deliveryTown : ''}
 
-DELIVERY INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${request.deliveryOfficeName ? `Office: ${request.deliveryOfficeName}` : ''}
-${request.deliveryStreetName ? `Street: ${request.deliveryStreetName}` : ''}
-${request.deliveryTown ? `Town: ${request.deliveryTown}` : ''}
+${orderNotes ? `Special Requirements:\n${orderNotes}\n\n` : ''}For this order, we kindly request a detailed quotation including:
 
-${orderNotes ? `ADDITIONAL NOTES:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${orderNotes}\n` : ''}
+1. Unit pricing for the specified tires and tubes
+2. Expected delivery timeframe
+3. Applicable warranty coverage details
+4. Available payment terms and options
+5. Any current promotional offers or fleet discounts
 
-We kindly request your best quotation for this order, including:
-• Unit price per tire/tube
-• Estimated delivery timeline
-• Warranty terms
-• Payment terms
+As a long-term partner of SLT Mobitel, your competitive pricing and quality service have been invaluable to our operations. We look forward to maintaining this mutually beneficial relationship.
 
-CONTACT INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Requester: ${request.requesterName}
-Department: ${request.userSection}
-Phone: ${request.requesterPhone}
+Authorized Contact Person:
+${request.requesterName}
+${request.userSection}
+SLT Mobitel
+Direct Line: ${request.requesterPhone}
 Email: ${request.requesterEmail}
 
-Your prompt response would be greatly appreciated as we aim to maintain our fleet operations efficiently.
+Please acknowledge receipt of this order request. We anticipate your comprehensive quotation at your earliest convenience, preferably within the next 2-3 business days.
+
+Thank you for your continued support and professional service.
 
 Best regards,
+
 ${request.requesterName}
+Fleet Management Department
 SLT Mobitel
 `;
 
@@ -131,31 +132,26 @@ Dear ${supplier.name},
 
 I hope this message finds you well. This is an official tire order from SLT Mobitel.
 
-ORDER DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ORDER NUMBER: ${orderNumber}
-REQUEST ID: ${request.id}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Order Number: ${orderNumber}
+Request ID: ${request.id}
 
-PRODUCT SPECIFICATIONS:
+Product Details:
 • Vehicle Number: ${request.vehicleNumber}
 • Tire Size Required: ${request.tireSizeRequired}
-    • Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
+• Quantity: ${request.quantity} tire${request.quantity > 1 ? 's' : ''}${request.tubesQuantity > 0 ? ` and ${request.tubesQuantity} tube${request.tubesQuantity > 1 ? 's' : ''}` : ''}${deliveryParagraph}
 
-${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service. Your prompt response would be highly valued as we aim to maintain our fleet operations efficiently.
+${shouldIncludeNotes ? `Additional Requirements: ${orderNotes.trim()}\n\n` : ''}We would greatly appreciate if you could provide us with your most competitive pricing along with your delivery schedule and terms of service.
 
-Thank you for your continued partnership and support. We look forward to hearing from you soon.
+Thank you for your continued partnership. We look forward to your prompt response.
 
-Warm regards,
-
+Best regards,
 ${request.requesterName}
 ${request.userSection}
 SLT Mobitel
 
-Contact Information:
+Contact Details:
 Phone: ${request.requesterPhone}
-Email: ${request.requesterEmail}
-    `.trim();
+Email: ${request.requesterEmail}`.trim();
 
     // Prepare the email payload for Formspree - only the essential message
     const formspreePayload = {
