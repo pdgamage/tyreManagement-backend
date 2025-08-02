@@ -588,6 +588,7 @@ exports.placeOrder = async (req, res) => {
     const supplierDetails = {
       name: supplier.name,
       email: supplier.email,
+      contact_number: supplier.contact_number,
       contact_number: supplier.contact_number
     };
 
