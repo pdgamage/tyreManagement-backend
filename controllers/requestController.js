@@ -532,6 +532,11 @@ exports.placeOrder = async (req, res) => {
 
     console.log(`Placing order for request ${id} with supplier ${supplierId} and order number ${orderNumber}`);
 
+    // Validate order number
+    if (!orderNumber || orderNumber.trim() === '') {
+      return res.status(400).json({ error: "Order number is required" });
+    }
+
     // Validate required fields
     if (!supplierId) {
       return res.status(400).json({ error: "Supplier ID is required" });
@@ -579,6 +584,13 @@ exports.placeOrder = async (req, res) => {
     }
     const supplier = suppliers[0];
 
+    // Store supplier details for later use in request update
+    const supplierDetails = {
+      name: supplier.name,
+      email: supplier.email,
+      contact_number: supplier.contact_number
+    };
+
     // Validate supplier has FormsFree key
     if (!supplier.formsfree_key) {
       return res.status(400).json({
@@ -604,12 +616,34 @@ exports.placeOrder = async (req, res) => {
       });
     }
 
-    // Update request status to "order placed"
-    // Try different update strategies based on available columns
+    // Update request status to "order placed" and save order details
     try {
-      console.log("Attempting to save order details:", {
+      // Update the request with order details and supplier information
+      await pool.query(`
+        UPDATE requests 
+        SET 
+          status = 'order placed',
+          orderNumber = ?,
+          orderNotes = ?,
+          supplierName = ?,
+          supplierEmail = ?,
+          supplierPhone = ?
+        WHERE id = ?
+      `, [
         orderNumber,
         orderNotes,
+        supplier.name,
+        supplier.email,
+        supplier.contact_number,
+        id
+      ]);
+
+      console.log("Successfully saved order details:", {
+        orderNumber,
+        orderNotes,
+        supplierName: supplier.name,
+        supplierEmail: supplier.email,
+        supplierPhone: supplier.contact_number,
         id,
         status: "order placed"
       });

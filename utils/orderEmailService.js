@@ -8,6 +8,15 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     // Create email subject
     const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNumber} - Request #${request.id}`;
 
+    // Add order details at the top of the message
+    const orderDetails = `
+ORDER DETAILS:
+-------------
+Order Number: ${orderNumber}
+Order Notes: ${orderNotes || 'N/A'}
+Request ID: ${request.id}
+`;
+
 
     // Handle different formats of formsfree_key
     let formspreeUrl = supplier.formsfree_key.trim();
