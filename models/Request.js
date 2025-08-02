@@ -1,31 +1,7 @@
 const { sequelize } = require("../config/db");
 const { DataTypes } = require("sequelize");
 
-cons    deliveryTown: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    // Order details
-    supplierName: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    supplierEmail: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    supplierPhone: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    orderNumber: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    orderNotes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },quest = sequelize.define(
+const Request = sequelize.define(
   "Request",
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -148,6 +124,27 @@ cons    deliveryTown: {
       type: DataTypes.STRING(100),
       allowNull: true,
       field: 'CostCenter', // Maps to the CostCenter column in database
+    },
+    // Order details
+    supplierName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    supplierEmail: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    supplierPhone: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    orderNumber: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    orderNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
   },
   {
