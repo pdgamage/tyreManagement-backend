@@ -588,7 +588,7 @@ exports.placeOrder = async (req, res) => {
     const supplierDetails = {
       name: supplier.name,
       email: supplier.email,
-      contact_number: supplier.contact_number
+      phone: supplier.phone
     };
 
     // Validate supplier has FormsFree key
@@ -634,7 +634,7 @@ exports.placeOrder = async (req, res) => {
         orderNotes,
         supplier.name,
         supplier.email,
-        supplier.contact_number,
+        supplier.phone,
         id
       ]);
 
@@ -643,7 +643,7 @@ exports.placeOrder = async (req, res) => {
         orderNotes,
         supplierName: supplier.name,
         supplierEmail: supplier.email,
-        supplierPhone: supplier.contact_number,
+        supplierPhone: supplier.phone,
         id,
         status: "order placed"
       });
@@ -691,6 +691,7 @@ exports.placeOrder = async (req, res) => {
         id: supplier.id,
         name: supplier.name,
         email: supplier.email,
+        phone: supplier.phone,
       },
       emailResult: emailResult,
       orderNotes: orderNotes,
@@ -712,6 +713,7 @@ exports.placeOrder = async (req, res) => {
           id: supplier.id,
           name: supplier.name,
           email: supplier.email,
+          phone: supplier.phone,
         },
         emailResult: emailResult,
         orderNotes: orderNotes,
