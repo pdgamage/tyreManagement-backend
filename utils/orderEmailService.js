@@ -6,7 +6,7 @@ async function sendOrderEmail(supplier, request, orderNotes = '', orderNumber = 
     console.log(`Sending order email to supplier: ${supplier.name} (${supplier.email})`);
     
     // Create email subject
-    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNotes.orderNumber} - Request #${request.id}`;
+    const emailSubject = `🚛 Tire Order Request - Vehicle ${request.vehicleNumber} - Order #${orderNumber} - Request #${request.id}`;
 
 
     // Handle different formats of formsfree_key
