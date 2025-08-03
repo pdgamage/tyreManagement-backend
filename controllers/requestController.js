@@ -742,30 +742,3 @@ exports.deleteRequest = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-exports.getRequestByVehicle = async (req, res) => {
-  try {
-    const vehicleNumber = req.params.vehicleNumber;
-
-    // Find the most recent request for this vehicle
-    const request = await Request.findOne({
-      where: { vehicleNumber },
-      order: [['submittedAt', 'DESC']]
-    });
-
-    if (!request) {
-      return res.status(404).json({ error: "No requests found for this vehicle" });
-    }
-
-    // If the request has been completed and an order was placed, include supplier details
-    if (request.status === 'order placed') {
-      // Request already includes supplier details from the placeOrder function
-      return res.json(request);
-    }
-
-    res.json(request);
-  } catch (error) {
-    console.error("Error fetching vehicle request:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
