@@ -12,33 +12,21 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     const { startDate, endDate } = req.query;
 
     let query = `
-      SELECT 
-        r.*,
-        v.vehicle_number,
-        v.brand as vehicle_brand,
-        v.model as vehicle_model,
-        v.type as vehicle_type,
-        v.department as vehicle_department,
-        v.cost_centre as vehicle_cost_centre,
-        u.name as requester_name,
-        u.email as requester_email,
-        u.phone as requester_phone,
-        s.name as supplier_name,
-        s.contact_person as supplier_contact,
-        s.phone as supplier_phone,
-        s.email as supplier_email,
-        su.name as supervisor_name,
-        tm.name as technical_manager_name,
-        en.name as engineer_name,
-        co.name as customer_officer_name
+      SELECT r.*, 
+             u.name as requester_name,
+             u.email as requester_email,
+             u.phone as requester_phone,
+             v.vehicle_number,
+             v.brand as vehicle_brand,
+             v.model as vehicle_model,
+             s.name as supplier_name,
+             s.contact_person as supplier_contact,
+             s.phone as supplier_phone,
+             s.email as supplier_email
       FROM requests r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN vehicles v ON r.vehicle_id = v.id
       LEFT JOIN suppliers s ON r.supplier_id = s.id
-      LEFT JOIN users su ON r.supervisor_decision_by = su.id
-      LEFT JOIN users tm ON r.technical_manager_id = tm.id
-      LEFT JOIN users en ON r.engineer_decision_by = en.id
-      LEFT JOIN users co ON r.customer_officer_decision_by = co.id
       WHERE v.vehicle_number = ?
     `;
 
@@ -58,60 +46,13 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
       return res.status(404).json({ message: 'No requests found for this vehicle number' });
     }
 
-    // Get images for each request and format the response
-    const formattedRequests = await Promise.all(requests.map(async (request) => {
+    // Get images for each request
+    for (const request of requests) {
       const [images] = await pool.query('SELECT * FROM request_images WHERE request_id = ?', [request.id]);
-      
-      // Map the database fields to match the frontend's TireRequest interface
-      return {
-        id: request.id,
-        vehicleNumber: request.vehicle_number || request.vehicleNumber,
-        quantity: request.quantity,
-        tubesQuantity: request.tubes_quantity || request.tubesQuantity,
-        requestReason: request.request_reason || request.requestReason,
-        requesterName: request.requester_name || request.requesterName,
-        requesterEmail: request.requester_email || request.requesterEmail,
-        requesterPhone: request.requester_phone || request.requesterPhone,
-        vehicleBrand: request.vehicle_brand || request.vehicleBrand,
-        vehicleModel: request.vehicle_model || request.vehicleModel,
-        vehicleType: request.vehicle_type || request.vehicleType,
-        vehicleDepartment: request.vehicle_department || request.vehicleDepartment,
-        vehicleCostCentre: request.vehicle_cost_centre || request.vehicleCostCentre,
-        lastReplacementDate: request.last_replacement_date || request.lastReplacementDate,
-        existingTireMake: request.existing_tire_make || request.existingTireMake,
-        tireSize: request.tire_size || request.tireSize,
-        tireSizeRequired: request.tire_size_required || request.tireSizeRequired,
-        presentKmReading: request.present_km_reading || request.presentKmReading,
-        previousKmReading: request.previous_km_reading || request.previousKmReading,
-        tireWearPattern: request.tire_wear_pattern || request.tireWearPattern,
-        tireWearIndicatorAppeared: request.tire_wear_indicator_appeared || request.tireWearIndicatorAppeared,
-        comments: request.comments,
-        status: request.status,
-        submittedAt: request.submitted_at || request.submittedAt,
-        deliveryOfficeName: request.delivery_office_name || request.deliveryOfficeName,
-        deliveryStreetName: request.delivery_street_name || request.deliveryStreetName,
-        deliveryTown: request.delivery_town || request.deliveryTown,
-        totalPrice: request.total_price || request.totalPrice,
-        warrantyDistance: request.warranty_distance || request.warrantyDistance,
-        customerOfficerNote: request.customer_officer_note || request.customerOfficerNote,
-        supervisorApproved: request.supervisor_approved || request.supervisorApproved,
-        supervisorNotes: request.supervisor_notes || request.supervisorNotes,
-        supervisorTimestamp: request.supervisor_timestamp || request.supervisorTimestamp,
-        technicalManagerApproved: request.technical_manager_approved || request.technicalManagerApproved,
-        technicalManagerNotes: request.technical_manager_notes || request.technicalManagerNotes,
-        technicalManagerTimestamp: request.technical_manager_timestamp || request.technicalManagerTimestamp,
-        engineerApproved: request.engineer_approved || request.engineerApproved,
-        engineerNotes: request.engineer_notes || request.engineerNotes,
-        engineerTimestamp: request.engineer_timestamp || request.engineerTimestamp,
-        orderPlaced: request.order_placed || request.orderPlaced,
-        orderTimestamp: request.order_timestamp || request.orderTimestamp,
-        images: images || [],
-        createdAt: request.created_at || request.createdAt,
-        updatedAt: request.updated_at || request.updatedAt
-      };
-    }));
-    
-    res.status(200).json(formattedRequests);
+      request.images = images;
+    }
+
+    res.status(200).json(requests);
   } catch (error) {
     console.error('Error fetching requests by vehicle number:', error);
     res.status(500).json({ message: 'Error fetching requests', error: error.message });
