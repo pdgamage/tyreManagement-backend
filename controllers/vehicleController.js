@@ -67,3 +67,14 @@ exports.getVehicleById = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getVehiclesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const vehicles = await Vehicle.findAll({ where: { registeredBy: userId } });
+    res.json(vehicles);
+  } catch (error) {
+    console.error(`Error fetching vehicles for user ${req.params.userId}:`, error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
