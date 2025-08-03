@@ -5,6 +5,60 @@ const { sendOrderEmail } = require("../utils/orderEmailService");
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
 
+// Get requests by vehicle number
+exports.getRequestsByVehicleNumber = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+    const { startDate, endDate } = req.query;
+
+    let query = `
+      SELECT r.*, 
+             u.name as requester_name,
+             u.email as requester_email,
+             u.phone as requester_phone,
+             v.vehicle_number,
+             v.brand as vehicle_brand,
+             v.model as vehicle_model,
+             s.name as supplier_name,
+             s.contact_person as supplier_contact,
+             s.phone as supplier_phone,
+             s.email as supplier_email
+      FROM requests r
+      LEFT JOIN users u ON r.user_id = u.id
+      LEFT JOIN vehicles v ON r.vehicle_id = v.id
+      LEFT JOIN suppliers s ON r.supplier_id = s.id
+      WHERE v.vehicle_number = ?
+    `;
+
+    const queryParams = [vehicleNumber];
+
+    // Add date range filter if provided
+    if (startDate && endDate) {
+      query += ' AND DATE(r.created_at) BETWEEN ? AND ?';
+      queryParams.push(startDate, endDate);
+    }
+
+    query += ' ORDER BY r.created_at DESC';
+
+    const [requests] = await pool.query(query, queryParams);
+
+    if (!requests || requests.length === 0) {
+      return res.status(404).json({ message: 'No requests found for this vehicle number' });
+    }
+
+    // Get images for each request
+    for (const request of requests) {
+      const [images] = await pool.query('SELECT * FROM request_images WHERE request_id = ?', [request.id]);
+      request.images = images;
+    }
+
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching requests by vehicle number:', error);
+    res.status(500).json({ message: 'Error fetching requests', error: error.message });
+  }
+};
+
 exports.createRequest = async (req, res) => {
   try {
     const requestData = req.body;

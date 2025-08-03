@@ -50,4 +50,7 @@ router.post("/:id/place-order", requestController.placeOrder);
 // Delete a request
 router.delete("/:id", requestController.deleteRequest);
 
+// Get requests by vehicle number
+router.get("/vehicle/:vehicleNumber", requestController.getRequestsByVehicleNumber);
+
 module.exports = router;
