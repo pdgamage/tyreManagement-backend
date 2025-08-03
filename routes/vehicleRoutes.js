@@ -11,7 +11,4 @@ router.post('/', vehicleController.createVehicle);
 // Get a single vehicle
 router.get('/:id', vehicleController.getVehicleById);
 
-// Get all vehicles for a specific user
-router.get('/user/:userId', vehicleController.getVehiclesByUserId);
-
 module.exports = router;
