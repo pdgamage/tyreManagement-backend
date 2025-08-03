@@ -469,17 +469,24 @@ exports.updateRequestStatus = async (req, res) => {
 exports.getRequestsByUser = async (req, res) => {
   try {
     const userId = req.params.id;
+    const { startDate, endDate } = req.query;
 
-    // Use raw SQL to join with vehicles table to get department information
-    const [requests] = await pool.query(
-      `
-      SELECT
-  r.*
-FROM requests r
-ORDER BY r.submittedAt DESC
-    `,
-      [userId]
-    );
+    let query = `
+      SELECT r.*
+      FROM requests r
+      WHERE r.user_id = ?
+    `;
+
+    const queryParams = [userId];
+
+    if (startDate && endDate) {
+      query += ' AND DATE(r.created_at) BETWEEN ? AND ?';
+      queryParams.push(startDate, endDate);
+    }
+
+    query += ' ORDER BY r.submittedAt DESC';
+
+    const [requests] = await pool.query(query, queryParams);
 
     // Fetch images for each request
     const requestsWithImages = await Promise.all(
