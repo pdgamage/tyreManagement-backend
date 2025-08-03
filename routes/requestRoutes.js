@@ -47,12 +47,6 @@ router.get(
 // Place order for an approved request
 router.post("/:id/place-order", requestController.placeOrder);
 
-// Get vehicle numbers for autocomplete
-router.get("/vehicles/search", requestController.getVehicleNumbers);
-
-// Search requests by vehicle number with filters
-router.get("/search/vehicle/:vehicleNumber", requestController.searchRequestsByVehicle);
-
 // Delete a request
 router.delete("/:id", requestController.deleteRequest);
 
