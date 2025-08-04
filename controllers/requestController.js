@@ -39,17 +39,17 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
       });
     }
 
-    // First, verify if the vehicle exists
+    // First, verify if request exists for the vehicle number
     try {
-      const [vehicleCheck] = await pool.query(
-        'SELECT id, vehicle_number FROM vehicles WHERE vehicle_number = ?',
+      const [requestCheck] = await pool.query(
+        'SELECT id, vehicleNumber FROM requests WHERE vehicleNumber = ?',
         [vehicleNumber]
       );
-      console.log('Vehicle check result:', vehicleCheck);
+      console.log('Request check result:', requestCheck);
     
-    if (!vehicleCheck || vehicleCheck.length === 0) {
-      console.log('Vehicle not found:', vehicleNumber);
-      return res.status(404).json({ message: 'Vehicle not found' });
+    if (!requestCheck || requestCheck.length === 0) {
+      console.log('No requests found for vehicle:', vehicleNumber);
+      return res.status(200).json([]); // Return empty array if no requests found
     }
 
     let query = `
@@ -57,18 +57,21 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
              u.name as requester_name,
              u.email as requester_email,
              u.phone as requester_phone,
-             v.vehicle_number,
-             v.brand as vehicle_brand,
-             v.model as vehicle_model,
+             r.vehicleNumber,
+             r.vehicleId,
+             r.userId,
+             r.quantity,
+             r.tubesQuantity,
+             r.tireSize,
+             r.requestReason,
              s.name as supplier_name,
              s.contact_person as supplier_contact,
              s.phone as supplier_phone,
              s.email as supplier_email
       FROM requests r
-      RIGHT JOIN vehicles v ON r.vehicle_id = v.id
-      LEFT JOIN users u ON r.user_id = u.id
+      LEFT JOIN users u ON r.userId = u.id
       LEFT JOIN suppliers s ON r.supplier_id = s.id
-      WHERE v.vehicle_number = ?
+      WHERE r.vehicleNumber = ?
     `;
     
     console.log('SQL Query:', query);
