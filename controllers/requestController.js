@@ -38,24 +38,16 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
       queryParams.push(startDate, endDate);
     }
 
-    query += ' ORDER BY r.created_at DESC';
-
-    const [requests] = await pool.query(query, queryParams);
-
-    if (!requests || requests.length === 0) {
-      return res.status(404).json({ message: 'No requests found for this vehicle number' });
+    try {
+      const [results] = await pool.query(query, queryParams);
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Error fetching requests by vehicle number:", error);
+      res.status(500).json({ message: "Failed to fetch requests" });
     }
-
-    // Get images for each request
-    for (const request of requests) {
-      const [images] = await pool.query('SELECT * FROM request_images WHERE request_id = ?', [request.id]);
-      request.images = images;
-    }
-
-    res.status(200).json(requests);
   } catch (error) {
-    console.error('Error fetching requests by vehicle number:', error);
-    res.status(500).json({ message: 'Error fetching requests', error: error.message });
+    console.error("Error in getRequestsByVehicleNumber:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
