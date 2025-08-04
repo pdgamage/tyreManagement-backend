@@ -11,6 +11,19 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     const { vehicleNumber } = req.params;
     const { startDate, endDate } = req.query;
 
+    console.log('Searching for vehicle number:', vehicleNumber);
+    
+    // First, verify if the vehicle exists
+    const [vehicleCheck] = await pool.query(
+      'SELECT id FROM vehicles WHERE vehicle_number = ?',
+      [vehicleNumber]
+    );
+    
+    if (!vehicleCheck || vehicleCheck.length === 0) {
+      console.log('Vehicle not found:', vehicleNumber);
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
     let query = `
       SELECT r.*, 
              u.name as requester_name,
@@ -24,8 +37,8 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
              s.phone as supplier_phone,
              s.email as supplier_email
       FROM requests r
+      INNER JOIN vehicles v ON r.vehicle_id = v.id
       LEFT JOIN users u ON r.user_id = u.id
-      LEFT JOIN vehicles v ON r.vehicle_id = v.id
       LEFT JOIN suppliers s ON r.supplier_id = s.id
       WHERE v.vehicle_number = ?
     `;
@@ -40,10 +53,17 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
 
     try {
       const [results] = await pool.query(query, queryParams);
+      console.log('Query results:', results);
+      
+      if (!results || results.length === 0) {
+        console.log('No requests found for vehicle:', vehicleNumber);
+        return res.status(200).json([]); // Return empty array instead of error
+      }
+      
       res.status(200).json(results);
     } catch (error) {
       console.error("Error fetching requests by vehicle number:", error);
-      res.status(500).json({ message: "Failed to fetch requests" });
+      res.status(500).json({ message: "Failed to fetch requests", error: error.message });
     }
   } catch (error) {
     console.error("Error in getRequestsByVehicleNumber:", error);
