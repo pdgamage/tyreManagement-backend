@@ -12,110 +12,116 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
 
   console.log('API called with vehicle number:', vehicleNumber);
 
+  // Test database connection first
   try {
-    // 1. Test database connection
-    try {
-      await pool.query('SELECT 1');
-      console.log('✓ Database connection successful');
-    } catch (connError) {
-      console.error('✗ Database connection failed:', connError);
-      return res.status(500).json({ 
-        message: "Database connection failed", 
-        error: connError.message 
-      });
-    }
+    await pool.query('SELECT 1');
+    console.log('Database connection successful');
+  } catch (connError) {
+    console.error('Database connection failed:', connError);
+    return res.status(500).json({ 
+      message: "Database connection failed", 
+      error: connError.message 
+    });
+  }
 
-    console.log('Searching for vehicle number:', vehicleNumber);
-    
-    // Test database connection first
-    try {
-      await pool.query('SELECT 1');
-      console.log('Database connection successful');
-    } catch (connError) {
-      console.error('Database connection failed:', connError);
-      return res.status(500).json({ 
-        message: "Database connection failed", 
-        error: connError.message 
-      });
-    }
+  // Check for request existence
+  let requestCheck;
+  try {
+    [requestCheck] = await pool.query(
+      'SELECT id, vehicleNumber FROM requests WHERE vehicleNumber = ?',
+      [vehicleNumber]
+    );
+    console.log('Request check result:', requestCheck);
+  } catch (checkError) {
+    console.error('Error checking request existence:', checkError);
+    return res.status(500).json({ 
+      message: "Failed to check request existence", 
+      error: checkError.message 
+    });
+  }
 
-    // First, verify if request exists for the vehicle number
-    try {
-      const [requestCheck] = await pool.query(
-        'SELECT id, vehicleNumber FROM requests WHERE vehicleNumber = ?',
-        [vehicleNumber]
-      );
-      console.log('Request check result:', requestCheck);
+  if (!requestCheck || requestCheck.length === 0) {
+    console.log('No requests found for vehicle:', vehicleNumber);
+    return res.status(200).json([]);
+  }
+
+  // Fetch full request details
+  let query = `
+    SELECT 
+      r.id,
+      r.vehicleNumber,
+      r.vehicleId,
+      r.userId,
+      r.quantity,
+      r.tubesQuantity,
+      r.tireSize,
+      r.requestReason,
+      r.status,
+      r.created_at,
+      r.submittedAt,
+      u.name as requester_name,
+      u.email as requester_email,
+      u.phone as requester_phone,
+      s.name as supplier_name,
+      s.contact_person as supplier_contact,
+      s.phone as supplier_phone,
+      s.email as supplier_email
+    FROM requests r
+    LEFT JOIN users u ON r.userId = u.id
+    LEFT JOIN suppliers s ON r.supplier_id = s.id
+    WHERE r.vehicleNumber = ?
+  `;
+  
+  console.log('SQL Query:', query);
+
+  const queryParams = [vehicleNumber];
+
+  // Add date range filter if provided
+  if (startDate && endDate) {
+    query += ' AND DATE(r.created_at) BETWEEN ? AND ?';
+    queryParams.push(startDate, endDate);
+  }
+
+  // Execute the main query
+  let results;
+  try {
+    console.log('Executing query with params:', queryParams);
+    [results] = await pool.query(query, queryParams);
+    console.log('Query results:', JSON.stringify(results, null, 2));
     
-    if (!requestCheck || requestCheck.length === 0) {
+    if (!results || results.length === 0) {
       console.log('No requests found for vehicle:', vehicleNumber);
-      return res.status(200).json([]); // Return empty array if no requests found
+      return res.status(200).json([]);
     }
-
-    let query = `
-      SELECT r.*, 
-             u.name as requester_name,
-             u.email as requester_email,
-             u.phone as requester_phone,
-             r.vehicleNumber,
-             r.vehicleId,
-             r.userId,
-             r.quantity,
-             r.tubesQuantity,
-             r.tireSize,
-             r.requestReason,
-             s.name as supplier_name,
-             s.contact_person as supplier_contact,
-             s.phone as supplier_phone,
-             s.email as supplier_email
-      FROM requests r
-      LEFT JOIN users u ON r.userId = u.id
-      LEFT JOIN suppliers s ON r.supplier_id = s.id
-      WHERE r.vehicleNumber = ?
-    `;
     
-    console.log('SQL Query:', query);
-
-    const queryParams = [vehicleNumber];
-
-    // Add date range filter if provided
-    if (startDate && endDate) {
-      query += ' AND DATE(r.created_at) BETWEEN ? AND ?';
-      queryParams.push(startDate, endDate);
-    }
-
-    try {
-      console.log('Executing query with params:', queryParams);
-      const [results] = await pool.query(query, queryParams);
-      console.log('Query results:', JSON.stringify(results, null, 2));
-      
-      if (!results || results.length === 0) {
-        console.log('No requests found for vehicle:', vehicleNumber);
-        return res.status(200).json([]); // Return empty array instead of error
-      }
-      
-      // Process the results to ensure all required fields are present
-      const processedResults = results.map(result => ({
-        ...result,
-        status: result.status || 'pending',
-        orderNumber: result.orderNumber || null,
-        supplierName: result.supplier_name || null,
-        supplierPhone: result.supplier_phone || null
-      }));
-      
-      console.log('Processed results:', JSON.stringify(processedResults, null, 2));
-      res.status(200).json(processedResults);
-    } catch (error) {
-      console.error("Error fetching requests by vehicle number:", error);
-      res.status(500).json({ 
-        message: "Failed to fetch requests", 
-        error: error.message,
-        stack: error.stack 
-      });
-    }
-  } catch (error) {
-    console.error("Error in getRequestsByVehicleNumber:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // Process the results
+    const processedResults = results.map(result => ({
+      id: result.id,
+      vehicleNumber: result.vehicleNumber,
+      status: result.status || 'pending',
+      quantity: result.quantity,
+      tubesQuantity: result.tubesQuantity,
+      tireSize: result.tireSize,
+      requestReason: result.requestReason,
+      created_at: result.created_at,
+      submittedAt: result.submittedAt,
+      requester_name: result.requester_name,
+      requester_email: result.requester_email,
+      requester_phone: result.requester_phone,
+      supplier_name: result.supplier_name,
+      supplier_contact: result.supplier_contact,
+      supplier_phone: result.supplier_phone,
+      supplier_email: result.supplier_email
+    }));
+    
+    console.log('Processed results:', JSON.stringify(processedResults, null, 2));
+    return res.status(200).json(processedResults);
+  } catch (queryError) {
+    console.error("Error executing main query:", queryError);
+    return res.status(500).json({ 
+      message: "Failed to fetch requests", 
+      error: queryError.message 
+    });
   }
 };
 
