@@ -4,7 +4,6 @@ const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
-const { Request } = require("../models");
 
 exports.createRequest = async (req, res) => {
   try {
