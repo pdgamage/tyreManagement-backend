@@ -1,7 +1,9 @@
 const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
+const { sequelize } = require("../config/db");
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
+const { Op } = require('sequelize');
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
 
@@ -756,19 +758,30 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
 
     console.log(`Fetching requests for vehicle: ${vehicleNumber}`);
     
-    // Try with case-insensitive search
-    const requests = await Request.findAll({
-      where: sequelize.where(
-        sequelize.fn('LOWER', sequelize.col('vehicleNumber')),
-        'LIKE',
-        `%${vehicleNumber.toLowerCase()}%`
-      ),
+    // First try exact match
+    let requests = await Request.findAll({
+      where: { vehicleNumber },
       order: [['submittedAt', 'DESC']],
-      raw: true, // Get plain JSON objects
+      raw: true,
     });
+
+    // If no exact matches, try case-insensitive search
+    if (requests.length === 0) {
+      console.log('No exact matches, trying case-insensitive search');
+      requests = await Request.findAll({
+        where: {
+          vehicleNumber: {
+            [Op.like]: `%${vehicleNumber}%`
+          }
+        },
+        order: [['submittedAt', 'DESC']],
+        raw: true,
+      });
+    }
 
     console.log(`Found ${requests.length} requests for vehicle: ${vehicleNumber}`);
     
+    // Return empty array if no requests found
     if (!requests || requests.length === 0) {
       return res.status(200).json({
         success: true,
@@ -793,7 +806,7 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error processing your request',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      error: error.message, // Always include the error message for debugging
     });
   }
 };
