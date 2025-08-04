@@ -749,7 +749,7 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     
     const requests = await Request.findAll({
       where: { vehicleNumber },
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
 
     if (!requests || requests.length === 0) {
