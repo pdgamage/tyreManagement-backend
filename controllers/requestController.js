@@ -7,17 +7,45 @@ const { sendOrderEmail } = require("../utils/orderEmailService");
 
 // Get requests by vehicle number
 exports.getRequestsByVehicleNumber = async (req, res) => {
+  const { vehicleNumber } = req.params;
+  const { startDate, endDate } = req.query;
+
+  console.log('API called with vehicle number:', vehicleNumber);
+
   try {
-    const { vehicleNumber } = req.params;
-    const { startDate, endDate } = req.query;
+    // 1. Test database connection
+    try {
+      await pool.query('SELECT 1');
+      console.log('✓ Database connection successful');
+    } catch (connError) {
+      console.error('✗ Database connection failed:', connError);
+      return res.status(500).json({ 
+        message: "Database connection failed", 
+        error: connError.message 
+      });
+    }
 
     console.log('Searching for vehicle number:', vehicleNumber);
     
+    // Test database connection first
+    try {
+      await pool.query('SELECT 1');
+      console.log('Database connection successful');
+    } catch (connError) {
+      console.error('Database connection failed:', connError);
+      return res.status(500).json({ 
+        message: "Database connection failed", 
+        error: connError.message 
+      });
+    }
+
     // First, verify if the vehicle exists
-    const [vehicleCheck] = await pool.query(
-      'SELECT id FROM vehicles WHERE vehicle_number = ?',
-      [vehicleNumber]
-    );
+    try {
+      const [vehicleCheck] = await pool.query(
+        'SELECT id, vehicle_number FROM vehicles WHERE vehicle_number = ?',
+        [vehicleNumber]
+      );
+      console.log('Vehicle check result:', vehicleCheck);
     
     if (!vehicleCheck || vehicleCheck.length === 0) {
       console.log('Vehicle not found:', vehicleNumber);
@@ -37,11 +65,13 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
              s.phone as supplier_phone,
              s.email as supplier_email
       FROM requests r
-      INNER JOIN vehicles v ON r.vehicle_id = v.id
+      RIGHT JOIN vehicles v ON r.vehicle_id = v.id
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN suppliers s ON r.supplier_id = s.id
       WHERE v.vehicle_number = ?
     `;
+    
+    console.log('SQL Query:', query);
 
     const queryParams = [vehicleNumber];
 
@@ -52,18 +82,33 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     }
 
     try {
+      console.log('Executing query with params:', queryParams);
       const [results] = await pool.query(query, queryParams);
-      console.log('Query results:', results);
+      console.log('Query results:', JSON.stringify(results, null, 2));
       
       if (!results || results.length === 0) {
         console.log('No requests found for vehicle:', vehicleNumber);
         return res.status(200).json([]); // Return empty array instead of error
       }
       
-      res.status(200).json(results);
+      // Process the results to ensure all required fields are present
+      const processedResults = results.map(result => ({
+        ...result,
+        status: result.status || 'pending',
+        orderNumber: result.orderNumber || null,
+        supplierName: result.supplier_name || null,
+        supplierPhone: result.supplier_phone || null
+      }));
+      
+      console.log('Processed results:', JSON.stringify(processedResults, null, 2));
+      res.status(200).json(processedResults);
     } catch (error) {
       console.error("Error fetching requests by vehicle number:", error);
-      res.status(500).json({ message: "Failed to fetch requests", error: error.message });
+      res.status(500).json({ 
+        message: "Failed to fetch requests", 
+        error: error.message,
+        stack: error.stack 
+      });
     }
   } catch (error) {
     console.error("Error in getRequestsByVehicleNumber:", error);
