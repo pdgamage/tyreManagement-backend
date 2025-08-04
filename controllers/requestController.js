@@ -4,6 +4,7 @@ const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
+const { Request } = require("../models");
 
 exports.createRequest = async (req, res) => {
   try {
@@ -740,5 +741,35 @@ exports.deleteRequest = async (req, res) => {
   } catch (error) {
     console.error("Error deleting request:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getRequestsByVehicleNumber = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+    
+    const requests = await Request.findAll({
+      where: { vehicleNumber },
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!requests || requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No requests found for the specified vehicle number',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: requests,
+    });
+  } catch (error) {
+    console.error('Error fetching requests by vehicle number:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching requests',
+      error: error.message,
+    });
   }
 };
