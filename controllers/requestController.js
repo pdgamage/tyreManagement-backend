@@ -747,14 +747,32 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
   try {
     const { vehicleNumber } = req.params;
     
+    if (!vehicleNumber || vehicleNumber.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle number is required',
+      });
+    }
+
+    console.log(`Fetching requests for vehicle: ${vehicleNumber}`);
+    
+    // Try with case-insensitive search
     const requests = await Request.findAll({
-      where: { vehicleNumber },
+      where: sequelize.where(
+        sequelize.fn('LOWER', sequelize.col('vehicleNumber')),
+        'LIKE',
+        `%${vehicleNumber.toLowerCase()}%`
+      ),
       order: [['submittedAt', 'DESC']],
+      raw: true, // Get plain JSON objects
     });
 
+    console.log(`Found ${requests.length} requests for vehicle: ${vehicleNumber}`);
+    
     if (!requests || requests.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        data: [],
         message: 'No requests found for the specified vehicle number',
       });
     }
@@ -762,13 +780,20 @@ exports.getRequestsByVehicleNumber = async (req, res) => {
     res.status(200).json({
       success: true,
       data: requests,
+      count: requests.length,
     });
   } catch (error) {
-    console.error('Error fetching requests by vehicle number:', error);
+    console.error('Error in getRequestsByVehicleNumber:', {
+      error: error.message,
+      stack: error.stack,
+      params: req.params,
+      query: req.query
+    });
+    
     res.status(500).json({
       success: false,
-      message: 'Error fetching requests',
-      error: error.message,
+      message: 'Error processing your request',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 };
