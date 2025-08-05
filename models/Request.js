@@ -44,7 +44,6 @@ const Request = sequelize.define(
       defaultValue: "pending",
     },
     submittedAt: { type: DataTypes.DATE, allowNull: false },
-    orderPlacedDate: { type: DataTypes.DATE, allowNull: true },
     supervisor_notes: { type: DataTypes.TEXT },
     technical_manager_note: { type: DataTypes.TEXT },
     engineer_note: { type: DataTypes.TEXT },
