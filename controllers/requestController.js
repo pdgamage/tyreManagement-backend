@@ -1,4 +1,4 @@
-const RequestImage = require("../models/RequestImage");
+const RequestImexports.createRequest = async (req, res) => {uire("../models/RequestImage");
 const { Request } = require("../models");
 const { sequelize } = require("../config/db");
 const { pool } = require("../config/db");
@@ -21,7 +21,7 @@ exports.createRequest = async (req, res) =        console.log("Successfully save
         supplierPhone: supplier.phone,
         orderPlacedDate: formattedDateTime,
         id,
-        status: "order placed"y {
+        status: "order placed"
     const requestData = req.body;
 
     // Convert numeric fields from string to number
@@ -674,7 +674,7 @@ exports.placeOrder = async (req, res) => {
         supplierName: supplier.name,
         supplierEmail: supplier.email,
         supplierPhone: supplier.phone,
-        orderPlacedDate: formattedDate,
+        orderPlacedDate: formattedDateTime,
         id,
         status: "order placed"
       });
