@@ -1,4 +1,4 @@
-const RequestImexports.createRequest = async (req, res) => {uire("../models/RequestImage");
+const RequestImage = require("../models/RequestImage");
 const { Request } = require("../models");
 const { sequelize } = require("../config/db");
 const { pool } = require("../config/db");
@@ -13,15 +13,8 @@ const isValidDate = (dateString) => {
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
 
-exports.createRequest = async (req, res) =        console.log("Successfully saved order details:", {
-        orderNumber,
-        orderNotes,
-        supplierName: supplier.name,
-        supplierEmail: supplier.email,
-        supplierPhone: supplier.phone,
-        orderPlacedDate: formattedDateTime,
-        id,
-        status: "order placed"
+exports.createRequest = async (req, res) => {
+  try {
     const requestData = req.body;
 
     // Convert numeric fields from string to number
@@ -642,10 +635,6 @@ exports.placeOrder = async (req, res) => {
 
     // Update request status to "order placed" and save order details
     try {
-      // Convert the date string to MySQL DATETIME format (YYYY-MM-DD HH:mm:ss)
-      const date = new Date(orderPlacedDate);
-      const formattedDateTime = date.toISOString().slice(0, 19).replace('T', ' ');
-
       // Update the request with order details and supplier information
       await pool.query(`
         UPDATE requests 
@@ -664,7 +653,7 @@ exports.placeOrder = async (req, res) => {
         supplier.name,
         supplier.email,
         supplier.phone,
-        formattedDateTime,
+        orderPlacedDate,
         id
       ]);
 
@@ -674,10 +663,22 @@ exports.placeOrder = async (req, res) => {
         supplierName: supplier.name,
         supplierEmail: supplier.email,
         supplierPhone: supplier.phone,
-        orderPlacedDate: formattedDateTime,
         id,
         status: "order placed"
       });
+      // First try with all columns including order number and notes
+      await pool.query(
+        `UPDATE requests 
+         SET status = ?,
+             order_placed = true,
+             order_timestamp = NOW(),
+             order_number = ?,
+             order_notes = ?,
+             customer_officer_note = ?
+         WHERE id = ?`,
+        ["order placed", orderNumber, orderNotes, orderNotes, id]
+      );
+      console.log("Updated request with all columns including order details");
     } catch (error) {
       console.log("Full update failed, trying status only:", error.message);
       try {
