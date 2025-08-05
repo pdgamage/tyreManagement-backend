@@ -4,6 +4,12 @@ const { sequelize } = require("../config/db");
 const { pool } = require("../config/db");
 const { sendOrderEmail } = require("../utils/orderEmailService");
 const { Op } = require('sequelize');
+
+// Helper function to validate date format
+const isValidDate = (dateString) => {
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date);
+};
 // const websocketService = require("../services/websocketService"); // Disabled
 // const sseRoutes = require("../routes/sseRoutes"); // Disabled
 
@@ -530,7 +536,7 @@ exports.checkVehicleRestrictions = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplierId, orderNotes, orderNumber } = req.body;
+    const { supplierId, orderNotes, orderNumber, orderPlacedDate } = req.body;
 
     console.log(`Placing order for request ${id} with supplier ${supplierId} and order number ${orderNumber}`);
 
@@ -546,6 +552,15 @@ exports.placeOrder = async (req, res) => {
     
     if (!orderNumber) {
       return res.status(400).json({ error: "Order number is required" });
+    }
+
+    if (!orderPlacedDate) {
+      return res.status(400).json({ error: "Order placed date is required" });
+    }
+
+    // Validate order placed date format
+    if (!isValidDate(orderPlacedDate)) {
+      return res.status(400).json({ error: "Invalid order placed date format" });
     }
 
     // Get the request details
@@ -629,7 +644,8 @@ exports.placeOrder = async (req, res) => {
           orderNotes = ?,
           supplierName = ?,
           supplierEmail = ?,
-          supplierPhone = ?
+          supplierPhone = ?,
+          orderPlacedDate = ?
         WHERE id = ?
       `, [
         orderNumber,
@@ -637,6 +653,7 @@ exports.placeOrder = async (req, res) => {
         supplier.name,
         supplier.email,
         supplier.phone,
+        orderPlacedDate,
         id
       ]);
 

@@ -146,6 +146,10 @@ const Request = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true
     },
+    orderPlacedDate: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
   },
   {
     tableName: "requests",
