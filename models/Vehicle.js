@@ -15,6 +15,8 @@ const VehicleModel = sequelize.define(
     make: { type: DataTypes.STRING(50) },
     model: { type: DataTypes.STRING(50) },
     type: { type: DataTypes.STRING(50) },
+    costCentre: { type: DataTypes.STRING(50) },
+    department: { type: DataTypes.STRING(50) },
     status: { type: DataTypes.STRING(20) },
   },
   {
@@ -41,6 +43,8 @@ class Vehicle {
     type,
     status,
     registeredBy,
+    costCentre,
+    department,
   }) {
     const vehicle = await VehicleModel.create({
       vehicleNumber,
@@ -49,6 +53,8 @@ class Vehicle {
       type,
       status,
       registeredBy,
+      costCentre,
+      department,
     });
     return vehicle.get({ plain: true });
   }
