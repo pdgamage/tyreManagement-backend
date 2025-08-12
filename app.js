@@ -71,7 +71,19 @@ app.get(
   "/api/azure-protected",
   passport.authenticate("oauth-bearer", { session: false }),
   (req, res) => {
-    res.json({ user: req.user });
+    // Ensure we send all necessary user fields
+    const { id, azure_id, email, name, role, costCentre, department } = req.user;
+    res.json({
+      user: {
+        id,
+        azure_id,
+        email,
+        name,
+        role,
+        costCentre: costCentre || "",
+        department: department || ""
+      }
+    });
   }
 );
 
