@@ -13,17 +13,30 @@ const options = {
 passport.use(
   new BearerStrategy(options, async (token, done) => {
     try {
-      // Check if user exists in MySQL
+      // Check if user exists in MySQL with all necessary fields
       const [rows] = await pool.query(
-        "SELECT * FROM users WHERE azure_id = ?",
+        "SELECT id, azure_id, email, name, role, costCentre, department FROM users WHERE azure_id = ?",
         [token.oid]
       );
       if (rows.length === 0) {
         return done(null, false, { message: "User not allowed" });
       }
-      // Attach user info from DB
-      return done(null, rows[0]);
+      
+      const user = rows[0];
+      // Ensure all necessary fields are included in the user object
+      const userResponse = {
+        id: user.id,
+        azure_id: user.azure_id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        costCentre: user.costCentre || "",
+        department: user.department || ""
+      };
+      
+      return done(null, userResponse);
     } catch (err) {
+      console.error("Azure auth error:", err);
       return done(err, false);
     }
   })
