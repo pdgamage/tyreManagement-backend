@@ -1,0 +1,3 @@
+ALTER TABLE vehicles
+ADD COLUMN costCentre VARCHAR(100),
+ADD COLUMN department VARCHAR(100);
