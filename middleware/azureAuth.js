@@ -16,7 +16,7 @@ passport.use(
       // Check if user exists in MySQL with all necessary fields
       // Query using the exact column names from the database
       const [rows] = await pool.query(
-        "SELECT id, azure_id, email, name, role, costcentre, department FROM users WHERE azure_id = ?",
+        "SELECT id, azure_id, email, name, role, costCentre, department FROM users WHERE azure_id = ?",
         [token.oid]
       );
       
@@ -34,7 +34,7 @@ passport.use(
         email: user.email,
         name: user.name,
         role: user.role,
-        costcentre: user.costcentre || "", // match the database column name exactly
+        costCentre: user.costCentre || "", // match the exact column name from database
         department: user.department || ""
       };
       
