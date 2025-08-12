@@ -15,8 +15,6 @@ const VehicleModel = sequelize.define(
     make: { type: DataTypes.STRING(50) },
     model: { type: DataTypes.STRING(50) },
     type: { type: DataTypes.STRING(50) },
-    costCentre: { type: DataTypes.STRING(100) },
-    department: { type: DataTypes.STRING(100) },
     status: { type: DataTypes.STRING(20) },
   },
   {
@@ -41,8 +39,6 @@ class Vehicle {
     make,
     model,
     type,
-    costCentre,
-    department,
     status,
     registeredBy,
   }) {
