@@ -17,7 +17,7 @@ exports.createVehicle = async (req, res) => {
       make,
       model,
       type,
-      costCentre,
+      cost_centre, // match the database column name
       department,
       status,
       registeredBy,
@@ -29,12 +29,16 @@ exports.createVehicle = async (req, res) => {
         .json({ success: false, error: "Vehicle number is required" });
     }
 
+    console.log('Creating vehicle with data:', { 
+      vehicleNumber, make, model, type, cost_centre, department, status, registeredBy 
+    });
+
     const vehicle = await Vehicle.create({
       vehicleNumber,
       make,
       model,
       type,
-      costCentre,
+      cost_centre, // match the database column name
       department,
       status,
       registeredBy,

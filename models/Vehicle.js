@@ -16,7 +16,10 @@ const VehicleModel = sequelize.define(
     model: { type: DataTypes.STRING(50) },
     type: { type: DataTypes.STRING(50) },
     status: { type: DataTypes.STRING(20) },
-    cost_centre: { type: DataTypes.STRING(100) },
+    cost_centre: { 
+      type: DataTypes.STRING(100),
+      field: 'cost_centre' // explicitly specify the database column name
+    },
     department: { type: DataTypes.STRING(100) },
   },
   {
